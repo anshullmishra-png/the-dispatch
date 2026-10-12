@@ -127,7 +127,7 @@ Hobby cron (verified 2026-10-12): up to 100 cron jobs per project, **once per da
 
 Because you cannot wait for Wednesday during a demo, every job also runs from `/api/admin/run/[job]` and from `npm run demo:week`.
 
-Each cron route: verify `Authorization: Bearer ${CRON_SECRET}` → resolve the job's issue (`getOrCreateIssue(job, now)`, using the rule above) → check idempotency (`pipeline_runs` with same job+issue and `ok=true` → return `{skipped:true}` unless `force`) → run → write `pipeline_runs`.
+Each cron route: verify `Authorization: Bearer ${CRON_SECRET}` → resolve the job's issue (`getOrCreateIssue(job, now)`, using the rule above) → check idempotency (`pipeline_runs` with same job+issue and `ok=true`, or a run in flight for <10 min → return `{skipped:true}` unless `force`; for **ingest** the scope is job+issue+**IST day**, because Mon–Wed all collect for one issue) → run → write `pipeline_runs`.
 
 ## 6. Issue state machine and the send gate
 

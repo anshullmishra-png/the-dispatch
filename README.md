@@ -19,7 +19,7 @@ Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md). Live:
 |---|---|---|
 | 0 | Foundations, decisions, deploy | Done |
 | 1 | Database and seed | Done |
-| 2 | Ingest | — |
+| 2 | Ingest | Done |
 | 3 | Dedupe | — |
 | 4 | Gemini selection | — |
 | 5 | State machine and send gate | — |
@@ -55,6 +55,7 @@ npm run dev
 | `npm run check` | typecheck + lint + test (run after every phase) |
 | `npm run db:generate` | Generate a migration from `db/schema.ts` |
 | `npm run db:migrate` | Apply migrations (Neon direct connection) |
+| `npm run probe` | Check every RSS feed; `-- --gnews` also checks news queries (spends quota) |
 | `npm run seed:issues` | Rebuild `db/seed/past-issues.json` from GNews (`-- --force`; spends ~15 requests) |
 | `npm run seed` | Re-runnable seed; prints the resulting counts |
 | `npm run test:db` | Integration tests against the real database |

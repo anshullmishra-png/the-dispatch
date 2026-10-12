@@ -37,6 +37,11 @@ interface SeedFile {
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, "utf8")) as T;
 
+/**
+ * Syncs the sources table to content/sources.seed.json: inserts new entries,
+ * deletes unlisted ones that no article references, and pauses the rest.
+ * Listed sources are never re-activated here: an auto-paused feed stays paused.
+ */
 async function seedSources() {
   const file = readJson<SourcesFile>("content/sources.seed.json");
   const rows = [
@@ -48,7 +53,26 @@ async function seedSources() {
     .values(rows)
     .onConflictDoNothing({ target: [sources.kind, sources.urlOrQuery] })
     .returning({ id: sources.id });
-  return { candidates: rows.length, inserted: inserted.length };
+
+  const listed = sql.join(
+    rows.map((r) => sql`(${r.kind}, ${r.urlOrQuery})`),
+    sql`, `,
+  );
+  const deleted = await db().execute(sql`
+    delete from sources s
+    where (s.kind, s.url_or_query) not in (${listed})
+      and not exists (select 1 from articles a where a.source_id = s.id)
+    returning s.name`);
+  const paused = await db().execute(sql`
+    update sources set active = false
+    where (kind, url_or_query) not in (${listed}) and active
+    returning name`);
+  return {
+    listed: rows.length,
+    inserted: inserted.length,
+    deleted: deleted.rows.length,
+    paused: paused.rows.length,
+  };
 }
 
 async function seedStyleGuide() {

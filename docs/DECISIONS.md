@@ -48,14 +48,21 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 | Seed commentary / voice | Neutral placeholder text, never sent to Gemini; **no** seeded `style_examples` | Few-shot comes only from Shreya's real edits; the style guide's Examples section carries the voice until then |
 | Secrets location | `.env.local` (git-ignored), converted to `KEY=VALUE` from the user's `label: value` notes; original kept as `.env.local.bak` (git-ignored) | During the check, a script accidentally printed the values into the chat transcript. Nothing was sent elsewhere. **Rotate the Neon password and the Gemini/GNews keys before submission** if the transcript could be shared |
 
+## Answered in Phase 2 (2026-10-12)
+
+| Topic | Decision | Notes |
+|---|---|---|
+| RSS feeds | 20 approved: 9 original survivors, 3 corrected URLs (Entrackr `/rss`, ET Tech Startups, HT Technology), 8 new (ET Tech Funding, Mint Companies, BusinessLine Info-tech and Money & Banking, The Hindu Business, Indian Express Business, CNBC-TV18 Business, TOI Business) | Dropped: Moneycontrol, Business Standard, Tech in Asia (403), Analytics India Mag, Techcircle, VCCircle, The News Minute (HTML/404), TechCrunch India (stale since 2 Sep) |
+| GNews queries | Only the 5 that returned ≥3 articles: `startup funding`, `quick commerce`, `AI startup`, `D2C brand`, `climate tech` | 25 sources total; 5 requests per ingest run (15/week) |
+
 ## Open
 
-- [ ] Feed list approval (Phase 2, after `probe-sources`)
+- [x] Feed list approval (Phase 2: 20 RSS + 5 GNews)
 - [ ] Sender: custom domain or `onboarding@resend.dev` (Phase 7)
 - [ ] `content/style-guide.md` filled by the user (before Phase 4)
 - [ ] Confirm `DEMO_MODE` defaults to `true` when unset (see Deviations)
 - [ ] Map text: "Thu 8 AM" → "Thu 7:30–8:30 AM IST" (user edits the workbook)
-- [ ] GNews starter queries: 5 of 10 are 3+ words and likely return ~nothing on the free plan; replacements to approve after the Phase 2 probe
+- [x] GNews starter queries replaced (Phase 2)
 - [ ] Rotate keys before submission (see "Secrets location")
 
 ## VERIFY log
@@ -93,3 +100,7 @@ Checked against official provider docs on 2026-10-12.
 | 2026-10-12 | Seed builder rejects non-business titles and same-issue near-duplicates (2+ shared name/number words) | Raw GNews results included TV-series reviews and the same funding round from two outlets in one issue |
 | 2026-10-12 | Migrations run through `scripts/migrate.ts` (drizzle migrator over Neon's **direct** host), not `drizzle-kit migrate` | Neon recommends the non-pooled connection for schema changes; the pooled `DATABASE_URL` stays the app's connection |
 | 2026-10-12 | DB integration tests in a separate suite (`npm run test:db`) | `08-TESTING` requires unit tests to be network-free; the "trigram query works in a test" check needs the real database |
+| 2026-10-12 | **ingest idempotency is per IST day**, not per issue (other jobs stay per issue). A run started in the last 10 min with no finish time also blocks (in-flight guard) | Mon, Tue and Wed ingest all collect for the same issue; a per-issue rule would skip Tue/Wed. Vercel cron may double-deliver, hence the in-flight check. `?force=1` (still needs the bearer secret) bypasses |
+| 2026-10-12 | RSS is fetched with `fetch` (8 s `AbortSignal` timeout, bot User-Agent) and parsed with `rss-parser.parseString` | Gives a hard per-feed timeout and readable HTTP errors; `rss-parser.parseURL` has no abortable timeout |
+| 2026-10-12 | `pipeline_runs.trigger` = `cron` when the request's User-Agent starts with `vercel-cron`, else `manual` | Vercel Cron identifies itself by User-Agent; the bearer secret alone can't tell a cron call from a manual curl |
+| 2026-10-12 | `npm run seed` **syncs** sources to `content/sources.seed.json` (insert new, delete unreferenced unlisted, pause referenced unlisted) | The original seed only inserted, so 11 dead feeds and 10 retired queries would have stayed active |

@@ -14,14 +14,14 @@ Items marked **VERIFY** may have changed. Check the provider's current docs befo
 
 ### GNews — `lib/collect/gnews.ts`
 - Endpoint (verified 2026-10-12): `GET https://gnews.io/api/v4/search`. Parameters: `q` (≤200 chars), `lang=en`, `country=in`, `max=10`, `from=<window_start ISO>`, `sortby=publishedAt`, `apikey`.
-- One `sources` row per query (`kind='gnews'`). Starter queries:
+- One `sources` row per query (`kind='gnews'`). Final list: the five above (user chose to keep only queries that returned ≥3 articles). Original starter queries, superseded:
   `Indian startup funding`, `India startup layoffs OR shutdown`, `Indian unicorn`, `India fintech regulation RBI`, `India quick commerce`, `India D2C brand`, `India AI startup`, `India climate tech startup`, `India SaaS startup`, `India startup IPO`.
 - Quota (verified 2026-10-12): free plan = 100 requests/day (resets 00:00 UTC; over-quota returns **403**), ≤10 articles per request, **12-hour article delay**, 30 days of history, content truncated, **non-commercial use only** (user accepted for this exam project). 10 queries × 3 ingest days = 30 requests. If 403/429 → stop GNews for the run, continue with RSS.
 - Store `publisher` from the API's `source.name`.
 - **Observed on the free plan (2026-10-12, ~75 test requests):** queries of 3+ words return 0–2 articles (e.g. `Indian startup funding` with `country=in` and a date range → 0), while 1–2 word queries with `country=in` return the full 10 Indian results across a `from`/`to` range. `sortby=publishedAt` returns only the newest ~1–2 days of a range; `sortby=relevance` spreads across it. Generic words match non-business news ("Series A" → TV-series reviews, "SaaS" → the TV serial *Kyunki Saas Bhi…*). Response: `{ information, totalArticles, articles[] }`; article keys `id,title,description,content,url,image,publishedAt,lang,source{id,name,url,country}`. **Phase 2:** the probe must test every starter query, not just RSS feeds, and the user approves replacements for weak ones.
 
 ### Candidate RSS feeds — `content/sources.seed.json`
-**All UNVERIFIED.** `scripts/probe-sources.ts` must fetch each, parse, and report item count and newest date. Keep only feeds that return items from the last 14 days. Ask the user to approve the final list. Target: RSS feeds + GNews queries ≥ 20 sources.
+**Resolved 2026-10-12.** `npm run probe` found 9/20 candidates below working; 11 were dead (404, 403 bot-blocking, HTML instead of XML) or stale. After probing 30 replacements, the user approved **20 RSS feeds + 5 GNews queries** (`startup funding`, `quick commerce`, `AI startup`, `D2C brand`, `climate tech`), now in `content/sources.seed.json`; `npm run seed` syncs the `sources` table to that file (inserts new, deletes unreferenced unlisted rows, pauses referenced ones). The table below is the original candidate list, kept for history.
 
 | Name | Candidate URL |
 |---|---|

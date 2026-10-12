@@ -1,5 +1,14 @@
 # Changelog
 
+## Phase 2 — Ingest (2026-10-12)
+
+- `npm run probe` (`scripts/probe-sources.ts`): checks every RSS feed (free) and, with `--gnews`, each news query. 9/20 original feeds worked; 20 working feeds + 5 GNews queries approved by the user.
+- `lib/collect/`: `rss.ts` (fetch with 8 s timeout + `rss-parser`), `gnews.ts` (quota-aware, never leaks the key), `text.ts` (HTML stripping), `limit.ts` (concurrency 6), `index.ts` (`collectAll`, `prepareItems`, `runIngest` with source health and auto-pause after 5 failures).
+- `lib/issues.ts` (`getOrCreateIssue`), `lib/runs.ts` (pipeline runs + idempotency), `lib/security.ts` (timing-safe bearer/admin checks, fail closed).
+- `GET /api/cron/ingest`: bearer `CRON_SECRET`, per-IST-day idempotency, `?force=1`, stats in `pipeline_runs.stats`.
+- Seed now syncs `sources` to `content/sources.seed.json`.
+- Dependency added: `rss-parser` (listed in `docs/02-ARCHITECTURE.md` §2).
+
 ## Phase 1 — Database and seed (2026-10-12)
 
 - Drizzle schema (`db/schema.ts`) for all 12 tables in `docs/03-DATA-MODEL.md` plus `style_guides` (user decision: style guide in Neon). Migrations `0000_extensions` (pg_trgm, citext, pgcrypto) and `0001_init`, applied over Neon's direct host by `npm run db:migrate`.
