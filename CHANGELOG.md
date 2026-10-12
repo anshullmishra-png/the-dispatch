@@ -1,5 +1,13 @@
 # Changelog
 
+## Phase 3 — Dedupe (2026-10-12)
+
+- `lib/dedupe/trigram.ts`: JS port of `pg_trgm` similarity (matches the PostgreSQL docs example; integration-tested against Postgres).
+- `lib/dedupe/engine.ts`: duplicate rule with distinctive-entity matching, `chooseDuplicateRoot`, `pickRepresentatives`. Calibrated thresholds approved by the user (see `05-INTEGRATIONS.md` §2).
+- `lib/dedupe/history.ts`: `loadLastFourSet` (live picks of the four most recent SENT issues) and `matchLastFour` (title + edited headline + exact URL).
+- `lib/dedupe/classify.ts`: `classifyNewArticles` → `duplicate` / `seen_before` / `candidate`, with sample matched pairs in the run stats. Wired into every ingest.
+- Ingest: Medianama replaced by ET Small Biz after probing spares from Vercel's `sin1` region.
+
 ## Phase 2 — Ingest (2026-10-12)
 
 - `npm run probe` (`scripts/probe-sources.ts`): checks every RSS feed (free) and, with `--gnews`, each news query. 9/20 original feeds worked; 20 working feeds + 5 GNews queries approved by the user.

@@ -34,8 +34,10 @@ export async function GET(req: Request) {
   try {
     const stats = await runIngest(issue, { log: runLog, now });
     await finishRun(runId, { ok: true, stats });
-    runLog.info("ingest finished", { totals: stats.totals, gnews: stats.gnews });
-    return NextResponse.json({ ok: true, runId, issueDate: issue.issueDate, totals: stats.totals, gnews: stats.gnews });
+    const { processed, duplicate, seenBefore, candidate } = stats.dedupe;
+    const dedupe = { processed, duplicate, seenBefore, candidate };
+    runLog.info("ingest finished", { totals: stats.totals, gnews: stats.gnews, dedupe });
+    return NextResponse.json({ ok: true, runId, issueDate: issue.issueDate, totals: stats.totals, gnews: stats.gnews, dedupe });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await finishRun(runId, { ok: false, error: message });

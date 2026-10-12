@@ -56,6 +56,12 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 | GNews queries | Only the 5 that returned ≥3 articles: `startup funding`, `quick commerce`, `AI startup`, `D2C brand`, `climate tech` | 25 sources total; 5 requests per ingest run (15/week) |
 | Medianama → ET Small Biz | User asked to replace Medianama (HTTP 403 to Vercel's servers, though it works from a home connection) with a spare that works | Spares were tested **from Vercel `sin1`** via a throwaway preview deployment (Medianama 403 reproduced; ET Small Biz, HT Business, NDTV Profit, TechCrunch Startups all 200). ET Small Biz chosen: Indian and closest to the startup beat. Lesson: probe feeds from the deployment region, not locally |
 
+## Answered in Phase 3 (2026-10-12)
+
+| Topic | Decision | Notes |
+|---|---|---|
+| Duplicate thresholds | **Calibrated rule** replaces the documented one: ≥0.85; or ≥0.60 + 1 distinctive shared entity; or ≥0.30 + 2 distinctive shared entities | Calibrated on 509 real articles (~130k pairs). vs the doc rule: +~20 true duplicates caught, −3 false alarms. Evidence and rationale in `05-INTEGRATIONS.md` §2. `DOC_RULE` kept in code for comparison |
+
 ## Open
 
 - [x] Feed list approval (Phase 2: 20 RSS + 5 GNews)
@@ -105,3 +111,7 @@ Checked against official provider docs on 2026-10-12.
 | 2026-10-12 | RSS is fetched with `fetch` (8 s `AbortSignal` timeout, bot User-Agent) and parsed with `rss-parser.parseString` | Gives a hard per-feed timeout and readable HTTP errors; `rss-parser.parseURL` has no abortable timeout |
 | 2026-10-12 | `pipeline_runs.trigger` = `cron` when the request's User-Agent starts with `vercel-cron`, else `manual` | Vercel Cron identifies itself by User-Agent; the bearer secret alone can't tell a cron call from a manual curl |
 | 2026-10-12 | `npm run seed` **syncs** sources to `content/sources.seed.json` (insert new, delete unreferenced unlisted, pause referenced unlisted) | The original seed only inserted, so 11 dead feeds and 10 retired queries would have stayed active |
+| 2026-10-12 | Last-4 matching runs in JS with a `pg_trgm` port; within-window matching stays in SQL | Last-4 compares normalised *edited headlines*, which exist only after JS normalisation. Parity with Postgres is integration-tested (< 1e-6 on 200 real pairs) |
+| 2026-10-12 | Within-window matching compares against all already-classified articles of the issue, not only earlier-published ones | GNews delivers with a 12 h delay, so an older article can arrive after a newer copy. `duplicate_of` still points to the cluster root of the earliest match, and `pickRepresentatives` picks the earliest-published member anyway |
+| 2026-10-12 | SQL prefilter `title_norm % $1` uses pg_trgm's default threshold 0.3, which is strict (`>`) | Pairs scoring exactly 0.300 are excluded; immaterial in practice and keeps the GIN index usable over the Neon HTTP driver (no session `SET`) |
+| 2026-10-12 | Dedupe runs inside every ingest (after inserts), so articles are classified on arrival | Curate (Phase 4) only reads `candidate` representatives; `classifyNewArticles` is idempotent (touches only `new` rows) and can also be called by curate |

@@ -56,15 +56,24 @@ Dead feeds are expected. Replace them rather than shipping failing sources.
 
 **Entities** (`extractEntities`): capitalised tokens/phrases and numbers from the *original* title, lowercased, excluding stop-list (sentence-initial common words, month names, "India", "Indian", "startup").
 
+**Duplicate rule (calibrated 2026-10-12, user-approved; code: `CALIBRATED_RULE` in `lib/dedupe/engine.ts`).** Two titles are the same story if `similarity(title_norm)`:
+- `≥ 0.85` (near-identical / syndicated copies), or
+- `≥ 0.60` and ≥ **1** shared *distinctive* entity, or
+- `≥ 0.30` and ≥ **2** shared *distinctive* entities.
+
+*Distinctive* excludes entities made only of generic words (results, profit, IPO, rupee, U.S., AI, GST, RBI, …), quarter/fiscal codes (Q2, H1, FY26), years and bare numbers ≤ 31. Entities match when equal or when one's words are contained in the other's ("ai-focused bytexl" ~ "bytexl").
+
+*Why it replaced the original rule* (`≥ 0.6`, or `≥ 0.45` with ≥ 2 shared entities, kept as `DOC_RULE`): on 509 real articles, cross-outlet rewrites of one story scored 0.30–0.45 (e.g. two reports of Tessolve's $75 Mn round: 0.447), so the original missed ~20 true duplicates, and it raised 3 false alarms on template headlines ("Rupee rises 16 paise…" vs "…23 paise…"). Pairs sharing only one distinctive name (e.g. TCS vs Infosys reactions to the same US rule) stay separate on purpose: wrongly merging hides a story from Gemini; Phase 4's `SAME_STORY_IN_PICKS` check still guards picks.
+
 **Classification order for a new article A:**
 1. Insert with `ON CONFLICT (canonical_hash) DO NOTHING`. Conflict → already known, stop (counts as `known`).
-2. **Within window:** find earlier articles in the same issue with `similarity(title_norm) ≥ 0.6`, or `≥ 0.45` and ≥2 shared entities. Match → `duplicate`, `duplicate_of = earliest`, store score in `similarity`.
-3. **Last-4:** compare against the Last-4 set (story article titles + headlines). Same rule and thresholds, plus exact canonical-hash equality. Match → `seen_before`, `seen_in_issue` set.
+2. **Within window:** compare with the issue's already-classified articles (SQL `title_norm % $1` on the GIN index, then the rule above). Match → `duplicate`, `duplicate_of` = cluster root of the earliest-published match, score in `similarity`. New articles are processed in publish order, so later ones can match earlier ones from the same run.
+3. **Last-4:** compare against the Last-4 set (story article titles + headlines as sent, normalised). Same rule, plus exact canonical-hash equality. Match → `seen_before`, `seen_in_issue` set. (Done in JS with a `pg_trgm` port, `lib/dedupe/trigram.ts`, because edited headlines are normalised in code; an integration test shows it matches Postgres to < 1e-6.)
 4. Otherwise → `candidate`.
 
 Cluster representative at curate time: among articles linked by `duplicate_of`, keep the earliest-published, tie-break longest snippet. Only representatives go to Gemini.
 
-Required unit tests: tracking params removed; AMP and `www` variants collapse; suffix stripping; `Rs 50 crore` vs `₹50 crore`; two outlets, same funding round → duplicate; same company, different story → **not** duplicate; Last-4 near-repeat → `seen_before`; 0.44 similarity with 0 shared entities → candidate.
+Required unit tests: tracking params removed; AMP and `www` variants collapse; suffix stripping; `Rs 50 crore` vs `₹50 crore`; two outlets, same funding round → duplicate; same company, different story → **not** duplicate; Last-4 near-repeat → `seen_before`; 0.44 similarity with 0 shared entities → candidate. Added with calibration: template headlines about different companies → not duplicate; tier edges 0.30 / 0.60 / 0.85.
 
 Use trigram similarity in SQL: `similarity(a.title_norm, $1)` via `pg_trgm`, with the GIN index. Run one query per new article, bounded to the window.
 

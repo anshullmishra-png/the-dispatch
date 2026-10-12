@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { articles, type Issue, type NewArticle, type Source, sources } from "@/db/schema";
 import { db } from "@/lib/db";
 import { canonicalizeUrl, hashUrl } from "@/lib/dedupe/canonical";
+import { classifyNewArticles, type DedupeStats } from "@/lib/dedupe/classify";
 import { extractEntities, normalizeTitle } from "@/lib/dedupe/normalize";
 import { env } from "@/lib/env";
 import type { Logger } from "@/lib/log";
@@ -157,6 +158,7 @@ export interface IngestStats {
   totals: { sources: number; ok: number; failed: number; skipped: number; fetched: number; inWindow: number; inserted: number; known: number };
   gnews: { requests: number; stopped: string | null };
   sources: SourceStat[];
+  dedupe: DedupeStats;
   durationMs: number;
 }
 
@@ -228,6 +230,8 @@ export async function runIngest(issue: Issue, opts: { log: Logger; deps?: Collec
     }
   }
 
+  const dedupe = await classifyNewArticles(issue, { log: opts.log });
+
   const sum = (k: "fetched" | "inWindow" | "inserted" | "known") => stats.reduce((n, s) => n + (s[k] ?? 0), 0);
   return {
     issueDate: issue.issueDate,
@@ -244,6 +248,7 @@ export async function runIngest(issue: Issue, opts: { log: Logger; deps?: Collec
     },
     gnews: { requests: gnewsRequests, stopped: gnewsStopped },
     sources: stats,
+    dedupe,
     durationMs: Date.now() - started,
   };
 }

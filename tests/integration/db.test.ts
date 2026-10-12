@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { db } from "@/lib/db";
 import { normalizeTitle } from "@/lib/dedupe/normalize";
+import { trigramSimilarity } from "@/lib/dedupe/trigram";
 
 // Requires `npm run db:migrate && npm run seed` against the configured database.
 const rows = async <T>(query: ReturnType<typeof sql>) => (await db().execute(query)).rows as T[];
@@ -60,6 +61,22 @@ describe.skipIf(!process.env.DATABASE_URL)("Neon database (integration)", () => 
       limit 1`);
     expect(best?.title).toMatch(/Ultraviolette/);
     expect(best?.score).toBeGreaterThan(0.3);
+  });
+
+  it("the JS trigram port gives the same scores as pg_trgm on real titles", async () => {
+    const titles = await rows<{ t: string }>(sql`select title_norm as t from articles order by id limit 201`);
+    expect(titles.length).toBeGreaterThan(50);
+    const left = titles.slice(0, -1).map((r) => r.t);
+    const right = titles.slice(1).map((r) => r.t);
+    // Drizzle expands JS arrays into a row of params, so pass them as one JSON value.
+    const scores = await rows<{ a: string; b: string; s: number }>(sql`
+      select l.v as a, r.v as b, similarity(l.v, r.v)::float as s
+      from jsonb_array_elements_text(${JSON.stringify(left)}::jsonb) with ordinality l(v, i)
+      join jsonb_array_elements_text(${JSON.stringify(right)}::jsonb) with ordinality r(v, i) using (i)`);
+    let maxDiff = 0;
+    for (const r of scores) maxDiff = Math.max(maxDiff, Math.abs(r.s - trigramSimilarity(r.a, r.b)));
+    expect(scores).toHaveLength(left.length);
+    expect(maxDiff).toBeLessThan(1e-6);
   });
 
   it("an unrelated headline has low similarity to that story", async () => {
