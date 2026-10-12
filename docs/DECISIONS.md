@@ -54,6 +54,7 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 |---|---|---|
 | RSS feeds | 20 approved: 9 original survivors, 3 corrected URLs (Entrackr `/rss`, ET Tech Startups, HT Technology), 8 new (ET Tech Funding, Mint Companies, BusinessLine Info-tech and Money & Banking, The Hindu Business, Indian Express Business, CNBC-TV18 Business, TOI Business) | Dropped: Moneycontrol, Business Standard, Tech in Asia (403), Analytics India Mag, Techcircle, VCCircle, The News Minute (HTML/404), TechCrunch India (stale since 2 Sep) |
 | GNews queries | Only the 5 that returned ≥3 articles: `startup funding`, `quick commerce`, `AI startup`, `D2C brand`, `climate tech` | 25 sources total; 5 requests per ingest run (15/week) |
+| Medianama → ET Small Biz | User asked to replace Medianama (HTTP 403 to Vercel's servers, though it works from a home connection) with a spare that works | Spares were tested **from Vercel `sin1`** via a throwaway preview deployment (Medianama 403 reproduced; ET Small Biz, HT Business, NDTV Profit, TechCrunch Startups all 200). ET Small Biz chosen: Indian and closest to the startup beat. Lesson: probe feeds from the deployment region, not locally |
 
 ## Open
 
