@@ -78,4 +78,20 @@ describe("groundingLint", () => {
   it("flags a multi-word name the source does not mention", () => {
     expect(groundingLint("Peak XV Partners also joined. Motilal Oswal led.", source)).toContain("ungrounded_entity:peak xv partners");
   });
+
+  // Real false alarms from the first live draft (2026-10-12).
+  it("does not join a name across a sentence boundary", () => {
+    const src = "Tessolve raised $75 Mn led by Vector Line Capital.";
+    expect(groundingLint("The round was led by Vector Line Capital. Semiconductor design needs capital.", src)).toEqual([]);
+  });
+
+  it("ignores a capitalised sentence opener in front of a name", () => {
+    const src = "What happens when merchants pass on UPI MDR costs to customers?";
+    expect(groundingLint("Passing UPI costs on hurts buyers. Merchants raise prices.", src)).toEqual([]);
+  });
+
+  it("still flags an invented mid-sentence detail", () => {
+    const src = "DailyObjects raises Rs 332 crore funding at Rs 1,050 crore valuation";
+    expect(groundingLint("DailyObjects closed a ₹332 crore Series C round. It will open stores.", src)).toContain("ungrounded_entity:series c");
+  });
 });

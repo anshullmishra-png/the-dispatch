@@ -21,7 +21,7 @@ Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md). Live:
 | 1 | Database and seed | Done |
 | 2 | Ingest | Done |
 | 3 | Dedupe | Done |
-| 4 | Gemini selection | — |
+| 4 | Gemini selection | Done |
 | 5 | State machine and send gate | — |
 | 6 | Telegram | — |
 | 7 | Email and send | — |

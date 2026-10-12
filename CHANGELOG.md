@@ -9,6 +9,8 @@
 - `GET /api/cron/curate`: bearer auth, per-issue idempotency, ingest guard, dedupe finalize, selection, draft; stats (tokens, attempts, violations) in `pipeline_runs`.
 - Model switched to `gemini-3.6-flash` after `gemini-3.8-flash` failed 4/4 live attempts.
 - Dependency added: `@google/genai` (listed in `docs/02-ARCHITECTURE.md` §2).
+- Live hardening: fallback Flash model rotation (`GEMINI_FALLBACK_MODELS`), `GEMINI_THINKING_LEVEL=LOW`, re-curate reconsiders the previous draft's stories, grounding lint no longer joins names across sentences or counts a sentence-opening word as part of a name.
+- First live draft: 9 picks + 5 backups, 5 topics, `gemini-3.6-flash`, 25.6 s, no repair needed.
 
 ## Phase 3 — Dedupe (2026-10-12)
 

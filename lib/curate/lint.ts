@@ -98,13 +98,28 @@ export function groundingLint(commentary: string, sourceText: string): string[] 
   }
 
   const sourceWords = source.replace(/[^\p{L}\p{N}\s]/gu, " ");
+  const inSource = (words: string[]) => {
+    const pattern = words.map(escapeRe).join("\\s+");
+    const plain = words.join(" ").replace(/[^\p{L}\p{N}\s]/gu, " ").trim().replace(/\s+/g, "\\s+");
+    return new RegExp(`\\b${plain}\\b`, "iu").test(sourceWords) || new RegExp(pattern, "iu").test(source);
+  };
   for (const entity of extractEntities(commentary)) {
     if (/\d/.test(entity) || !entity.includes(" ")) continue;
-    const pattern = entity.split(" ").map(escapeRe).join("\\s+");
-    const plain = entity.replace(/[^\p{L}\p{N}\s]/gu, " ").trim().replace(/\s+/g, "\\s+");
-    if (!new RegExp(`\\b${plain}\\b`, "iu").test(sourceWords) && !new RegExp(pattern, "iu").test(source)) {
-      flags.push(`ungrounded_entity:${entity}`);
+    const words = entity.split(" ");
+    if (inSource(words)) continue;
+    // A capitalised first word of a sentence ("Passing UPI costs…") is not part of a name.
+    if (startsSentence(commentary, words)) {
+      const rest = words.slice(1);
+      if (rest.length < 2 || inSource(rest)) continue;
     }
+    flags.push(`ungrounded_entity:${entity}`);
   }
   return flags;
+}
+
+function startsSentence(text: string, words: string[]): boolean {
+  const m = new RegExp(words.map(escapeRe).join("\\s+"), "iu").exec(text);
+  if (!m) return false;
+  const before = text.slice(0, m.index).trimEnd();
+  return before === "" || /[.!?]["”’')]*$/u.test(before);
 }

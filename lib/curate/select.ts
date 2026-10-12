@@ -61,10 +61,12 @@ export async function loadCurateContext(issue: Issue): Promise<CurateContext> {
       duplicateOf: articles.duplicateOf,
     })
     .from(articles)
-    .where(and(eq(articles.issueId, issue.id), inArray(articles.status, ["candidate", "duplicate"])));
+    .where(and(eq(articles.issueId, issue.id), inArray(articles.status, ["candidate", "duplicate", "selected", "backup"])));
 
-  // A cluster competes only if its root is still a candidate (not seen_before).
-  const candidateRoots = new Set(rows.filter((r) => r.status === "candidate").map((r) => r.id));
+  // A cluster competes only if its root is still eligible (not seen_before).
+  // selected/backup count as eligible so a forced re-curate reconsiders the last draft's stories.
+  const eligible = new Set(["candidate", "selected", "backup"]);
+  const candidateRoots = new Set(rows.filter((r) => eligible.has(r.status)).map((r) => r.id));
   const members = rows.filter((r) => candidateRoots.has(r.duplicateOf ?? r.id));
   const reps = trimCandidates(pickRepresentatives(members), MAX_CANDIDATES);
 

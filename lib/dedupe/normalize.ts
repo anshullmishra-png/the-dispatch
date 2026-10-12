@@ -74,7 +74,8 @@ function normalizeNumberToken(token: string): string {
 // Punctuation that ends a name phrase: "Elevar Equity, Kalaari Capital" is two
 // entities, not one. Apostrophes inside words ("Zepto's") do not break.
 // A comma between digits ("2,500") is a thousands separator, not a break.
-const PHRASE_BREAK = /,(?!\d)|(?<!\d),|[;:!?()[\]{}|"“”]|\s[-—–]\s|\s['‘’]|['‘’](?=\s|$)/u;
+// A period followed by whitespace ends a sentence, so names never span two.
+const PHRASE_BREAK = /,(?!\d)|(?<!\d),|\.(?=\s)|[;:!?()[\]{}|"“”]|\s[-—–]\s|\s['‘’]|['‘’](?=\s|$)/u;
 
 /** Starts with a capital, or is mixed-case like "byteXL" / "iPhone". */
 function isNameLike(token: string): boolean {
