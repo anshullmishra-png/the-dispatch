@@ -20,6 +20,7 @@ import {
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import type { Logger } from "@/lib/log";
+import { runSend } from "@/lib/mail/run-send";
 import { targetIssueDate } from "@/lib/time";
 import { answerCallbackQuery, sendMessage } from "./api";
 import { escapeHtml, parseCallback, renderEditPrompt, renderStory, storyCallback } from "./cards";
@@ -51,6 +52,8 @@ export interface TgUpdate {
 
 /** docs/05 §3: an edit prompt waits 30 minutes for the reply. */
 export const EDIT_TTL_MS = 30 * 60_000;
+/** Send now runs inside the webhook call (maxDuration 300 s). */
+const SEND_NOW_BUDGET_MS = 240_000;
 
 export type Sender = "unconfigured" | "editor" | "stranger";
 
@@ -378,6 +381,15 @@ async function onIssueAction(
     log.info("issue held", { issueId });
     return;
   }
-  // send_now: arrives with email delivery (docs/07 Phase 7).
-  await answer("Send now isn't available yet. Confirm instead and it goes out Thursday morning.", true);
+  // send_now: a confirmed issue whose scheduled send has passed (e.g. after the Thursday job held it).
+  const review = await loadReview(issueId);
+  if (review.issue.status !== "CONFIRMED" || !review.summary.sendNowAvailable) {
+    await answer(review.issue.status === "CONFIRMED" ? "It will go out with Thursday's scheduled send." : "Confirm the draft first.", true);
+    return;
+  }
+  await answer("Sending…");
+  const outcome = await runSend({ id: issueId, issueDate: review.issue.issueDate, status: review.issue.status }, log, Date.now() + SEND_NOW_BUDGET_MS);
+  if (outcome.kind === "partial") await sendMessage(chatId, "📤 Part of the list is sent; the rest continues with the next send run.");
+  await refreshSummary(await loadReview(issueId), chatId, { repost: false });
+  log.info("send now", { issueId, outcome: outcome.kind });
 }

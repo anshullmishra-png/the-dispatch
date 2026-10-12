@@ -8,6 +8,7 @@ import { applyTransition, canTransition, computeContentHash, type IssueStatus, t
 import { parseNeverSay, voiceLint } from "@/lib/curate/lint";
 import { db, type Tx, withTransaction } from "@/lib/db";
 import type { CardStory, DraftSummary, StoryState } from "@/lib/telegram/cards";
+import { istDate } from "@/lib/time";
 
 export type ReviewFailure = "not_found" | "ambiguous" | "issue_locked" | "not_a_live_pick" | "no_backups" | "empty_text";
 
@@ -156,6 +157,7 @@ export async function loadReview(issueId: string, exec: Exec = db()): Promise<Re
       topics,
       backupsLeft: unusedBackups.length,
       warnings: draftWarnings(livePicks.length, Object.keys(topics).length),
+      sendNowAvailable: istDate(new Date()) >= issue.issueDate,
     },
   };
 }

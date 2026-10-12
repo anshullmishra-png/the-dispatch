@@ -102,9 +102,12 @@ export function checkSendAllowed(input: {
   confirmApprovalHashes: readonly string[];
   sentAt: Date | null;
   shreyaTgId: number;
+  /** A send already under way (SENDING) may resume; every other guard still applies. */
+  resuming?: boolean;
 }): SendFailure[] {
   const failures: SendFailure[] = [];
-  if (input.status !== "CONFIRMED") failures.push("status_not_confirmed");
+  const statusOk = input.status === "CONFIRMED" || (input.resuming === true && input.status === "SENDING");
+  if (!statusOk) failures.push("status_not_confirmed");
   if (input.confirmedBy !== input.shreyaTgId) failures.push("wrong_confirmer");
   if (input.confirmedAt === null) failures.push("not_confirmed");
   if (input.storedHash === null || input.storedHash !== input.freshHash) failures.push("hash_changed");
@@ -186,7 +189,7 @@ function shreyaId(): number {
  * Throws SendNotAllowedError unless every guard passes. The first line of
  * sendIssue(); fails closed if SHREYA_TG_USER_ID is not configured.
  */
-export async function assertSendAllowed(issueId: string): Promise<void> {
+export async function assertSendAllowed(issueId: string, opts: { resuming?: boolean } = {}): Promise<void> {
   const shreya = shreyaId();
   const [issue] = await db()
     .select({
@@ -212,6 +215,7 @@ export async function assertSendAllowed(issueId: string): Promise<void> {
     confirmApprovalHashes: confirms.map((c) => c.hash).filter((h): h is string => h !== null),
     sentAt: issue.sentAt,
     shreyaTgId: shreya,
+    resuming: opts.resuming,
   });
   if (failures.length) throw new SendNotAllowedError(failures);
 }

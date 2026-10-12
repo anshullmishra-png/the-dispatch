@@ -5,7 +5,7 @@ import { safeEqual } from "@/lib/security";
 import { handleUpdate, type TgUpdate } from "@/lib/telegram/handlers";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 /** Telegram sends the secret given to setWebhook in this header on every update. */
 const SECRET_HEADER = "x-telegram-bot-api-secret-token";

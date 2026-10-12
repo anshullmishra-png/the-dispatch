@@ -15,7 +15,9 @@
     "seed:issues": "tsx scripts/build-seed-issues.ts",
     "probe": "tsx scripts/probe-sources.ts",
     "seed": "tsx scripts/seed.ts",
-    "test:db": "vitest run --config vitest.integration.config.mts"
+    "test:db": "vitest run --config vitest.integration.config.mts",
+    "e2e:telegram": "tsx scripts/e2e-telegram.ts",
+    "e2e:send": "tsx scripts/e2e-send.ts"
   },
   "engines": {
     "node": "24.x"
@@ -27,6 +29,7 @@
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.32.1",
     "rss-parser": "^3.13.0",
     "zod": "^4.6.6"
   },

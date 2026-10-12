@@ -107,6 +107,8 @@ export interface DraftSummary {
   topics: Record<string, number>;
   backupsLeft: number;
   warnings: readonly string[];
+  /** True once the scheduled Thursday send has passed: a confirmed issue can then go out now. */
+  sendNowAvailable?: boolean;
 }
 
 const isHttpUrl = (u: string) => /^https?:\/\/[^\s]+$/i.test(u);
@@ -194,6 +196,7 @@ function decisionButtons(s: DraftSummary): InlineButton[][] {
   const open = s.status === "DRAFTING" || s.status === "IN_REVIEW" || s.status === "HELD";
   if (open && s.counts.PENDING > 0) rows.push([{ text: "✅ Approve all remaining", callback_data: issueCallback("approve_all", s.issueId) }]);
   if (open) rows.push([{ text: "🚀 Confirm final draft", callback_data: confirmCallback(s.issueId, s.contentHash) }]);
+  if (s.status === "CONFIRMED" && s.sendNowAvailable) rows.push([{ text: "📤 Send now", callback_data: issueCallback("send_now", s.issueId) }]);
   if (s.status === "DRAFTING" || s.status === "IN_REVIEW" || s.status === "CONFIRMED") {
     rows.push([{ text: "⏸ Hold", callback_data: issueCallback("hold", s.issueId) }]);
   }

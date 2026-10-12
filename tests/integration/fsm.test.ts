@@ -11,14 +11,16 @@ import {
   transition,
 } from "@/lib/approval/fsm";
 import { db } from "@/lib/db";
-import { resetEnvCache } from "@/lib/env";
-import { SendNotImplementedError, sendIssue } from "@/lib/mail/send";
+import { EnvError, resetEnvCache } from "@/lib/env";
+import { createLogger } from "@/lib/log";
+import { sendIssue } from "@/lib/mail/send";
 import { collectingIssueDate, issueWindow } from "@/lib/time";
 
 // A disposable issue far in the future, so it can never collide with real data.
 const SHREYA = 424242;
 const issueDate = collectingIssueDate(new Date("2098-12-28T06:00:00Z"));
 let issueId = "";
+const log = createLogger({ test: "fsm" });
 const articleIds: string[] = [];
 
 const rejection = async (p: Promise<unknown>) => {
@@ -109,7 +111,10 @@ describe.skipIf(!process.env.DATABASE_URL)("state machine and send gate on Neon"
 
   it("the gate passes, and sendIssue gets past it", async () => {
     await expect(assertSendAllowed(issueId)).resolves.toBeUndefined();
-    await expect(sendIssue(issueId)).rejects.toBeInstanceOf(SendNotImplementedError);
+    // With no Resend key the send stops right after the gate: nothing is mailed from a test issue.
+    vi.stubEnv("RESEND_API_KEY", "");
+    resetEnvCache();
+    await expect(sendIssue(issueId, { log })).rejects.toBeInstanceOf(EnvError);
   });
 
   it("editing after confirm resets to IN_REVIEW and the gate blocks sending", async () => {
@@ -122,7 +127,7 @@ describe.skipIf(!process.env.DATABASE_URL)("state machine and send gate on Neon"
     expect(issue).toMatchObject({ status: "IN_REVIEW", contentHash: null, confirmedAt: null });
     const resets = await db().select().from(approvals).where(and(eq(approvals.issueId, issueId), eq(approvals.action, "reset_by_edit")));
     expect(resets).toHaveLength(1);
-    const err = await rejection(sendIssue(issueId));
+    const err = await rejection(sendIssue(issueId, { log }));
     expect(err).toBeInstanceOf(SendNotAllowedError);
     expect((err as SendNotAllowedError).failures).toContain("status_not_confirmed");
   });

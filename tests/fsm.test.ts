@@ -147,6 +147,13 @@ describe("checkSendAllowed (the six guards)", () => {
     expect(checkSendAllowed({ ...ok, ...over })).toContain(failure);
   });
 
+  it("a resumed send may continue from SENDING, but never from another status", () => {
+    expect(checkSendAllowed({ ...ok, status: "SENDING" })).toContain("status_not_confirmed");
+    expect(checkSendAllowed({ ...ok, status: "SENDING", resuming: true })).toEqual([]);
+    expect(checkSendAllowed({ ...ok, status: "IN_REVIEW", resuming: true })).toContain("status_not_confirmed");
+    expect(checkSendAllowed({ ...ok, status: "SENDING", resuming: true, freshHash: "h2" })).toContain("hash_changed");
+  });
+
   it("an unconfirmed issue fails several guards at once", () => {
     expect(checkSendAllowed({ ...ok, status: "IN_REVIEW", confirmedBy: null, confirmedAt: null, storedHash: null })).toEqual(
       expect.arrayContaining(["status_not_confirmed", "wrong_confirmer", "not_confirmed", "hash_changed", "no_confirm_approval"]),
