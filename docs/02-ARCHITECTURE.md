@@ -120,7 +120,7 @@ Hobby cron (verified 2026-10-12): up to 100 cron jobs per project, **once per da
 | ingest | `0 3 * * 1-3` | Mon–Wed 08:30–09:29 | collect |
 | curate | `0 9 * * 3` | Wed 14:30–15:29 | "Wednesday afternoon" |
 | notify | `0 12 * * 3` | Wed 17:30–18:29 | "by Wednesday evening" |
-| remind | `0 17 * * 3` | Wed 22:30–23:29 | reminder, placed **after** 10 PM so it can never fire early |
+| remind | `0 16 * * 3` and `0 17 * * 3` | Wed 21:30–22:29 and 22:30–23:29 | the first check at or after 22:00 IST reminds (a check before 10 PM skips); the second is the fallback. Never early (changed 2026-10-12) |
 | send | `0 2 * * 4` | Thu 07:30–08:29 | "Thursday morning", out by about 8 AM (moved from `0 3` on 2026-10-12 to match the map's "Thu 8 AM") |
 
 **Which issue a job acts on** (`lib/time.ts`): ingest uses `collectingIssueDate(now)` (the first Thursday strictly after today, IST). curate, notify, remind and send use `targetIssueDate(now)` (the Thursday on or after today, IST), so Thursday morning's send acts on today's issue while Thursday's articles already feed next week's.

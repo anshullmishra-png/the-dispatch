@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { loadReview } from "@/lib/approval/review";
 import { configuredFeatures, env } from "@/lib/env";
 import { getOrCreateIssue } from "@/lib/issues";
+import { reminderDeadline } from "@/lib/time";
 import { createLogger } from "@/lib/log";
 import { finishRun, hasBlockingRun, startRun } from "@/lib/runs";
 import { isAuthorizedBearer, isVercelCron } from "@/lib/security";
@@ -11,7 +12,12 @@ import { postCard, shreyaChatId } from "@/lib/telegram/deliver";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-/** R13: one reminder after 10 PM Wednesday, only while the issue is still IN_REVIEW. */
+/**
+ * R13: one reminder once Wednesday 10 PM has passed, only while the issue is
+ * still IN_REVIEW. Two daily crons call this (21:30–22:29 and 22:30–23:29 IST,
+ * Hobby fires anywhere in the hour): a check before 10 PM skips, so the first
+ * check at or after 10 PM reminds and the second is the fallback.
+ */
 export async function GET(req: Request) {
   const log = createLogger({ route: "cron/remind" });
   if (!isAuthorizedBearer(req, env().CRON_SECRET)) {
@@ -26,6 +32,10 @@ export async function GET(req: Request) {
   const force = new URL(req.url).searchParams.get("force") === "1";
   const now = new Date();
   const issue = await getOrCreateIssue("remind", now);
+  const deadline = reminderDeadline(issue.issueDate);
+  if (now < deadline && !force) {
+    return NextResponse.json({ ok: true, skipped: true, reason: "before_10pm_deadline", deadline: deadline.toISOString(), issueDate: issue.issueDate });
+  }
   if (issue.status !== "IN_REVIEW") {
     return NextResponse.json({ ok: true, skipped: true, reason: `issue_${issue.status.toLowerCase()}`, issueDate: issue.issueDate });
   }

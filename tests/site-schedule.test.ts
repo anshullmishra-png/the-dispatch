@@ -20,6 +20,11 @@ describe("nextCronRun", () => {
 });
 
 describe("upcomingJobs", () => {
+  it("gives remind's earlier check as its next run", () => {
+    const remind = upcomingJobs(new Date("2026-10-12T14:00:00Z")).find((j) => j.job === "remind");
+    expect(remind?.next.toISOString()).toBe("2026-10-14T16:00:00.000Z"); // Wed 21:30 IST
+  });
+
   it("lists all five jobs from vercel.json, soonest first", () => {
     const jobs = upcomingJobs(new Date("2026-10-12T14:00:00Z"));
     expect(jobs.map((j) => j.job)).toEqual(["ingest", "curate", "notify", "remind", "send"]);

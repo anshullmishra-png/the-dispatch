@@ -147,3 +147,8 @@ export function formatIssueDateShort(issueDate: IsoDate): string {
   const { m, d } = parseIsoDate(issueDate);
   return `${WEEKDAYS[weekdayOf(issueDate)]} ${d} ${MONTHS[m - 1]}`;
 }
+
+/** The brief's reminder deadline: Wednesday 10 PM IST before the Thursday issue. */
+export function reminderDeadline(issueDate: IsoDate): Date {
+  return istToUtc(addDays(issueDate, -1), 22, 0);
+}

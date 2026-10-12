@@ -15,7 +15,7 @@ const SCHEDULE_TEXT: Record<string, string> = {
   ingest: "Mon–Wed 08:30–09:29",
   curate: "Wed 14:30–15:29",
   notify: "Wed 17:30–18:29",
-  remind: "Wed 22:30–23:29 (first window always after 10 PM)",
+  remind: "Wed, at or after 10 PM: checks 21:30–22:29 and 22:30–23:29; a check before 10 PM sends nothing",
   send: "Thu 07:30–08:29",
 };
 

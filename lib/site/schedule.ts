@@ -46,8 +46,14 @@ export interface ScheduledJob {
   next: Date;
 }
 
+/** One row per job; a job with several crons (remind) shows its soonest run. */
 export function upcomingJobs(now: Date): ScheduledJob[] {
-  return vercel.crons
-    .map((c) => ({ job: c.path.split("/").pop() as string, schedule: c.schedule, next: nextCronRun(c.schedule, now) }))
-    .sort((a, b) => a.next.getTime() - b.next.getTime());
+  const byJob = new Map<string, ScheduledJob>();
+  for (const c of vercel.crons) {
+    const job = (c.path.split("?")[0] as string).split("/").pop() as string;
+    const next = nextCronRun(c.schedule, now);
+    const seen = byJob.get(job);
+    if (!seen || next < seen.next) byJob.set(job, { job, schedule: c.schedule, next });
+  }
+  return [...byJob.values()].sort((a, b) => a.next.getTime() - b.next.getTime());
 }

@@ -180,7 +180,7 @@ export async function weekTimeline(issue: { id: string; issueDate: string; statu
     step("Shreya confirms", "any time before the send", issue.confirmedAt ? "done" : "waiting", issue.confirmedAt),
     step(
       "Reminder if not confirmed",
-      "Wed 22:30–23:29 IST (Vercel Hobby fires anywhere in the hour, so this is the first window always after 10 PM)",
+      "Wed, first check at or after 10 PM IST (checks at 21:30–22:29 and 22:30–23:29; never before 10 PM)",
       reminder?.ok ? "done" : issue.confirmedAt ? "skipped" : "due",
       reminder?.startedAt ?? null,
       remindNote,

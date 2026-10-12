@@ -19,7 +19,7 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 | Mon–Wed 08:30 | ingest | 20 RSS feeds + 5 GNews queries; every article stored once (canonical-URL hash), near-duplicates and stories from the last four issues marked |
 | Wed 14:30 | curate | One Gemini Flash call over the week's candidates picks 8–10 stories across ≥3 topics, each with a signal tag, a rationale and 2–3 sentences in Shreya's voice. Code validates, re-prompts, repairs; a grounding lint flags unsupported numbers/names |
 | Wed 17:30 | notify | Header, one card per story (✅ Keep · ✏️ Edit · 🔄 Swap · 🗑 Remove · 🔗 Read) and a final card (Approve all · Confirm · Hold) on Telegram |
-| Wed 22:30 | remind | One reminder, only if still unconfirmed |
+| Wed 22:00+ | remind | One reminder, only if still unconfirmed at 10 PM: two checks (21:30–22:29, 22:30–23:29); one that runs before 10 PM sends nothing |
 | Thu 07:30 | send | **Only if Shreya confirmed** and nothing changed since: HTML + text email via Resend in batches of 100. Otherwise the issue is held and Shreya is alerted |
 | any time | webhooks | Telegram taps update stories; Resend bounce/complaint events and one-click unsubscribes update the list |
 
@@ -118,7 +118,7 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 | What if she forgets to confirm? | Reminder Wednesday night; Thursday's job holds the issue and alerts her instead of sending. "Send now" appears once she confirms. |
 | Bounces and unsubscribes? | One-click `List-Unsubscribe` + a confirmation page; Resend's Svix-signed webhooks mark bounced/complained; send claims only `active` subscribers. The brief says "Gmail bounces"; we use Resend's webhooks. |
 | Why Resend, not Gmail? | Free, webhook bounce events, works from serverless. Without a verified domain it delivers only to the account owner, hence the synthetic list and demo mode. |
-| Why these cron windows? | Hobby runs each cron once a day with hourly precision. The reminder sits after 10 PM so it can never fire early. |
+| Why these cron windows? | Hobby runs each cron once a day, anywhere within its hour. The reminder has two checks (21:30–22:29 and 22:30–23:29 IST); a check that runs before 10 PM sends nothing, so the reminder arrives at the first check after the deadline and never early. |
 | Is it live data? | Yes: RSS and GNews fetched at run time; the dashboard shows timestamps and counts. |
 | Failures? | Per-feed timeouts, auto-pause after 5 failures, Gemini retries/backoff/model fallback/re-prompt/repair, idempotent crons (Vercel may double-deliver), resumable send, Telegram retry. |
 

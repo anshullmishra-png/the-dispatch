@@ -139,3 +139,10 @@ describe("previousIssueDates / formatIssueDateShort", () => {
     expect(formatIssueDateShort("2026-10-15")).toBe("Thu 15 Oct");
   });
 });
+
+describe("reminderDeadline", () => {
+  it("is Wednesday 22:00 IST (16:30 UTC) before the Thursday issue", async () => {
+    const { reminderDeadline } = await import("@/lib/time");
+    expect(reminderDeadline("2026-10-15").toISOString()).toBe("2026-10-14T16:30:00.000Z");
+  });
+});
