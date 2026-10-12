@@ -4,7 +4,6 @@ import Link from "next/link";
 import { sendLog } from "@/db/schema";
 import { loadReview, type ReviewState } from "@/lib/approval/review";
 import { db } from "@/lib/db";
-import { isDeskEditor } from "@/lib/site/desk-auth";
 import { sendAttempts, voiceChecks } from "@/lib/site/proof";
 import { dashboardData } from "@/lib/site/queries";
 import { upcomingJobs } from "@/lib/site/schedule";
@@ -17,8 +16,6 @@ import {
   holdAction,
   keepAction,
   removeAction,
-  signIn,
-  signOut,
   swapAction,
 } from "./actions";
 
@@ -44,7 +41,9 @@ function editorial(r: ReviewState): { label: string; detail: string; alert: bool
 
 export default async function Desk({ searchParams }: Props) {
   const { msg } = await searchParams;
-  const [canEdit, d, attempts] = await Promise.all([isDeskEditor(), dashboardData(), sendAttempts()]);
+  // Open desk (user decision): every visitor can act, as Shreya, through the same gate.
+  const canEdit = true;
+  const [d, attempts] = await Promise.all([dashboardData(), sendAttempts()]);
   const review = d.issue && d.figures.picked ? await loadReview(d.issue.id) : null;
   const sendRun = upcomingJobs(new Date()).find((j) => j.job === "send");
 
@@ -183,30 +182,14 @@ export default async function Desk({ searchParams }: Props) {
                     </form>
                   ) : null}
                   <p className="muted" style={{ fontSize: 15 }}>
-                    Same issue as your Telegram cards: everything you do here updates them, and the send gate checks both.
+                    Same issue as your Telegram cards: everything you do here updates them, and the send gate checks both. This desk is open for
+                    the demo; in demo mode the email only reaches the allowlisted inbox.
                   </p>
-                  <form action={signOut}>
-                    <button className="ghost" type="submit" style={{ fontSize: 15, textDecoration: "underline" }}>
-                      Sign out
-                    </button>
-                  </form>
                 </div>
               ) : (
                 <p>This issue has been sent; nothing can change.</p>
               )
-            ) : (
-              <form action={signIn} className="stack">
-                <h2 className="card-heading">Edit this issue</h2>
-                <p style={{ fontSize: 16 }}>Read-only for visitors. Shreya signs in with the editor passcode to keep, edit, swap, remove and confirm.</p>
-                <div className="field">
-                  <label htmlFor="passcode">Editor passcode</label>
-                  <input id="passcode" name="passcode" type="password" autoComplete="current-password" required />
-                </div>
-                <button className="button" type="submit">
-                  Sign in
-                </button>
-              </form>
-            )}
+            ) : null}
           </div>
         </div>
       </section>
@@ -337,7 +320,7 @@ export default async function Desk({ searchParams }: Props) {
             ))}
           </ol>
           <p className="muted" style={{ fontSize: 15, marginTop: 8 }}>
-            To use one, pick it in a story&rsquo;s Swap menu{canEdit ? "" : " (after signing in)"} or tap 🔄 Swap on Telegram.
+            To use one, pick it in a story&rsquo;s Swap menu or tap 🔄 Swap on Telegram.
           </p>
         </section>
       ) : null}

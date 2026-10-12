@@ -1,14 +1,14 @@
 "use server";
 
-// Web desk actions. Each one: passcode session → the same review code the
-// Telegram bot uses (same locks, audit trail, FSM and send gate) → Telegram sync.
-import { cookies } from "next/headers";
+// Web desk actions: the same review code the Telegram bot uses (same locks,
+// audit trail, FSM and send gate), then a Telegram sync. Open to anyone by the
+// user's decision (2026-10-12) so examiners can try it; demo mode still limits
+// real mail to the allowlist.
 import { redirect } from "next/navigation";
 import { ConfirmRejectedError, IllegalTransitionError } from "@/lib/approval/fsm";
 import { approveAll, confirmIssue, editStory, holdIssue, keepStory, lintEdit, ReviewError, removeStory, swapStory } from "@/lib/approval/review";
 import { env } from "@/lib/env";
 import { createLogger } from "@/lib/log";
-import { DESK_COOKIE, DESK_SESSION_HOURS, deskSessionValue, isDeskEditor, passcodeMatches } from "@/lib/site/desk-auth";
 import { reviewErrorText } from "@/lib/telegram/handlers";
 import { syncTelegram } from "@/lib/telegram/sync";
 
@@ -20,7 +20,6 @@ function back(msg: string, anchor = ""): never {
 
 /** The desk acts as Shreya: the audit trail and the gate see her Telegram id. */
 async function editor(): Promise<{ actorTgId: number }> {
-  if (!(await isDeskEditor())) back("Sign in with the editor passcode first.");
   const id = Number(env().SHREYA_TG_USER_ID);
   if (!Number.isFinite(id)) back("SHREYA_TG_USER_ID is not configured.");
   return { actorTgId: id };
@@ -47,23 +46,6 @@ async function run(fn: () => Promise<string>, anchor = ""): Promise<never> {
     }
   }
   back(msg, anchor);
-}
-
-export async function signIn(form: FormData) {
-  if (!passcodeMatches(field(form, "passcode"))) back("That passcode is not right.");
-  (await cookies()).set(DESK_COOKIE, deskSessionValue(env().ADMIN_TOKEN as string), {
-    httpOnly: true,
-    secure: true,
-    sameSite: "strict",
-    path: "/",
-    maxAge: DESK_SESSION_HOURS * 3600,
-  });
-  back("Signed in. You can edit this issue.");
-}
-
-export async function signOut() {
-  (await cookies()).delete(DESK_COOKIE);
-  back("Signed out.");
 }
 
 export async function keepAction(form: FormData) {
