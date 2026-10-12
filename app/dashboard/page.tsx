@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { loadReview } from "@/lib/approval/review";
+import { auditTrail, hygiene, lastFourChecks, sendAttempts, sendGate, voiceChecks, weekTimeline } from "@/lib/site/proof";
 import { dashboardData, operationsData } from "@/lib/site/queries";
 import { upcomingJobs } from "@/lib/site/schedule";
 import { formatFlag, topicLabel } from "@/lib/telegram/cards";
@@ -76,6 +77,15 @@ export default async function Dashboard() {
   const [d, ops] = await Promise.all([dashboardData(), operationsData()]);
   const review = d.issue && d.figures.picked ? await loadReview(d.issue.id) : null;
   const next = upcomingJobs(now)[0];
+  const [gate, audit, timeline, attempts, hyg] = await Promise.all([
+    d.issue ? sendGate(d.issue.id) : null,
+    d.issue ? auditTrail(d.issue.id) : [],
+    d.issue ? weekTimeline(d.issue, now) : [],
+    sendAttempts(),
+    hygiene(),
+  ]);
+  const voice = review ? await voiceChecks(review.livePicks.map((p) => ({ id: p.id, text: p.commentary }))) : {};
+  const l4 = review ? await lastFourChecks(review.issue.issueDate, review.livePicks) : {};
   const eligible = d.figures.eligible;
   const status = d.issue?.status ?? "COLLECTING";
   const marker = MARKERS[status] ?? { glyph: "○" };
@@ -134,10 +144,64 @@ export default async function Dashboard() {
         </div>
       </section>
 
+      {timeline.length ? (
+        <section className="section">
+          <div className="grid-2" style={{ alignItems: "start" }}>
+            <div className="stack">
+              <p className="eyebrow">The brief&rsquo;s week, for this issue</p>
+              <h2 className="card-heading">Timeline</h2>
+              <ol className="timeline">
+                {timeline.map((s) => (
+                  <li key={s.label} className={`t-${s.state}`}>
+                    <span className="t-mark" aria-hidden="true">
+                      {s.state === "done" ? "●" : s.state === "failed" ? "!" : s.state === "skipped" ? "–" : "○"}
+                    </span>
+                    <div>
+                      <p>
+                        <b>{s.label}</b> <span className="muted">· {s.when}</span>
+                      </p>
+                      <p className="ui-label">
+                        {s.state}
+                        {s.at ? ` · ${formatIstDateTime(s.at)}` : ""}
+                        {s.note ? ` · ${s.note}` : ""}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            {gate ? (
+              <div className="card">
+                <p className="eyebrow">Never sends without Shreya</p>
+                <h2 className="card-heading">Send gate, live</h2>
+                <p style={{ fontSize: 16, marginTop: 8 }}>
+                  The send job runs these checks first; one ✗ and it sends nothing, holds the issue and alerts her on Telegram.
+                </p>
+                <ul className="checks">
+                  {gate.checks.map((c) => (
+                    <li key={c.label} className={c.ok ? "ok" : "no"}>
+                      <span aria-hidden="true">{c.ok ? "✓" : "✗"}</span> {c.label}
+                    </li>
+                  ))}
+                </ul>
+                <p className={`status-marker${gate.allowed ? "" : " alert"}`} style={{ marginTop: 16, display: "inline-block" }}>
+                  {gate.allowed ? "● Would send at the next Thursday run" : gate.status === "SENT" ? "● Already sent" : "! Would hold and alert Shreya"}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       {review ? (
         <section className="section">
           <p className="eyebrow">{draftLabel(review.issue.status)}</p>
           <h2 className="section-heading">This week&rsquo;s picks and why</h2>
+          <p style={{ marginTop: 8 }}>
+            <a className="red-link" href="/preview" target="_blank" rel="noopener">
+              Preview the email exactly as it will be sent →
+            </a>
+          </p>
           <p style={{ marginTop: 8 }}>
             Gemini read {d.figures.candidates.toLocaleString("en-IN")} candidates in one call and chose these. Each carries the kind of signal it
             found and its reason. ⚠ marks a number or name the grounding check could not find in the source. Shreya reviews every story on
@@ -173,6 +237,10 @@ export default async function Dashboard() {
                       <p className="ui-label" style={{ marginTop: 8 }}>
                         {REVIEW_STATE[p.state] ?? p.state}
                         {p.replacedPosition ? " · promoted from backups" : ""}
+                        {voice[p.id]
+                          ? ` · ${voice[p.id]?.sentences} sentences, ${voice[p.id]?.words} words · voice check ${voice[p.id]?.errors.length ? `✗ ${voice[p.id]?.errors.join(", ")}` : "✓"}`
+                          : ""}
+                        {p.id in l4 ? (l4[p.id] ? ` · ! matches the ${l4[p.id]} issue` : " · ✓ not in the last 4 issues") : ""}
                       </p>
                     </>
                   )}
@@ -210,6 +278,114 @@ export default async function Dashboard() {
       </section>
 
       <section className="section">
+        <p className="eyebrow">Every review action, as saved from Telegram</p>
+        <h2 className="card-heading">Audit trail for this issue</h2>
+        <div className="table-wrap" style={{ marginTop: 16 }}>
+          <table className="ruled">
+            <thead>
+              <tr>
+                <th scope="col">When (IST)</th>
+                <th scope="col">Who</th>
+                <th scope="col">Action</th>
+                <th scope="col">Story</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audit.map((a, i) => (
+                <tr key={i}>
+                  <td style={{ whiteSpace: "nowrap" }}>{formatIstDateTime(a.at).replace(" IST", "")}</td>
+                  <td>{a.who}</td>
+                  <td>
+                    {a.what}
+                    {a.extra ? <span className="muted"> · {a.extra}</span> : null}
+                  </td>
+                  <td>{a.story ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {audit.length === 0 ? <p style={{ marginTop: 16 }}>No review actions yet.</p> : null}
+        </div>
+        <p className="muted" style={{ marginTop: 16, fontSize: 16 }}>
+          Includes the automated end-to-end test runs (<code>npm run e2e:telegram</code>), which press the same buttons through the same signed
+          webhook as Shreya&rsquo;s Telegram account. A tap from any other account is ignored and never appears here.
+        </p>
+      </section>
+
+      <section className="section">
+        <div className="grid-2" style={{ alignItems: "start" }}>
+          <div className="card">
+            <p className="eyebrow">Delivery mode</p>
+            <h2 className="card-heading">{hyg.delivery.demoMode ? "Demo mode is on, by design" : "Live delivery"}</h2>
+            {hyg.delivery.demoMode ? (
+              <p style={{ fontSize: 16, marginTop: 8 }}>
+                Shreya&rsquo;s real list isn&rsquo;t available, so the 2,200 subscribers are {hyg.counts.synthetic.toLocaleString("en-IN")} synthetic
+                addresses, {hyg.counts.real} real {hyg.counts.real === 1 ? "inbox" : "inboxes"} ({hyg.delivery.allowlisted} on the allowlist) and{" "}
+                {hyg.counts.resendTest} Resend test inboxes. Every send still claims and logs all 2,200 rows in batches of 100; only the allowlist and the
+                Resend test inboxes get real mail, the rest are logged <i>skipped_demo</i>. The free sender ({hyg.delivery.sender}) can only reach the
+                account owner, so sending to synthetic addresses would just fail. Switching to a real list is one setting (<code>DEMO_MODE=false</code>)
+                plus a verified domain.
+              </p>
+            ) : (
+              <p style={{ fontSize: 16, marginTop: 8 }}>Every active subscriber gets the email.</p>
+            )}
+          </div>
+          <div className="card">
+            <p className="eyebrow">Unsubscribes and bounces</p>
+            <h2 className="card-heading">List hygiene</h2>
+            <p style={{ fontSize: 16, marginTop: 8 }}>
+              {hyg.counts.excluded} addresses are excluded from every send (unsubscribed, bounced or complained); the send job only claims{" "}
+              <i>active</i> subscribers ({hyg.counts.active.toLocaleString("en-IN")}). Unsubscribe is one click from the email (RFC 8058 header +
+              confirmation page). Bounces and complaints arrive as Svix-signed Resend webhooks.
+            </p>
+            <ul className="checks" style={{ marginTop: 12 }}>
+              {hyg.events.map((ev, i) => (
+                <li key={i}>
+                  <span aria-hidden="true">{ev.type === "email.bounced" || ev.type === "email.complained" ? "!" : "●"}</span> {ev.type} ·{" "}
+                  {formatIstDateTime(ev.at).replace(" IST", "")} · {ev.source}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <p className="eyebrow">Every run of the Thursday send job, including the ones the gate stopped</p>
+        <h2 className="card-heading">Send attempts</h2>
+        <div className="table-wrap" style={{ marginTop: 16 }}>
+          <table className="ruled">
+            <thead>
+              <tr>
+                <th scope="col">When (IST)</th>
+                <th scope="col">Issue</th>
+                <th scope="col">Outcome</th>
+                <th scope="col">Real emails</th>
+                <th scope="col">Skipped (demo)</th>
+                <th scope="col">Failed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attempts.map((a, i) => (
+                <tr key={i}>
+                  <td style={{ whiteSpace: "nowrap" }}>{formatIstDateTime(a.at).replace(" IST", "")}</td>
+                  <td>{a.issueDate ? formatIssueDateShort(a.issueDate) : "—"}</td>
+                  <td>
+                    {a.outcome}
+                    {a.reason ? <span className="muted"> · {a.reason}</span> : null}
+                  </td>
+                  <td>{a.sent}</td>
+                  <td>{a.skipped.toLocaleString("en-IN")}</td>
+                  <td>{a.failed ? `! ${a.failed}` : 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {attempts.length === 0 ? <p style={{ marginTop: 16 }}>No send runs yet.</p> : null}
+        </div>
+      </section>
+
+      <section className="section">
         <h2 className="card-heading">Delivery history</h2>
         <div className="table-wrap" style={{ marginTop: 16 }}>
           <table className="ruled">
@@ -237,7 +413,7 @@ export default async function Dashboard() {
           {ops.delivery.length === 0 ? <p style={{ marginTop: 16 }}>No sends yet.</p> : null}
         </div>
         <p className="muted" style={{ marginTop: 16, fontSize: 16 }}>
-          Seed issues predate the system, so they have no send log. Bounces and unsubscribes appear in &ldquo;Subscribers by status&rdquo;.{" "}
+          Per-recipient log of the current state; rehearsals reset it, the send attempts above keep every run.{" "}
           <Link href="/style-guide">Read the style guide →</Link>
         </p>
       </section>

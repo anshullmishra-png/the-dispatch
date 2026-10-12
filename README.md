@@ -5,7 +5,8 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 
 - **Live site:** https://the-dispatch-pi.vercel.app
   - [Dashboard](https://the-dispatch-pi.vercel.app/dashboard): issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
-  - [Articles](https://the-dispatch-pi.vercel.app/articles): every article collected this week and what the pipeline decided (duplicate of which story and how similar, seen in which past issue, candidate, picked, removed), with filters and search
+  - Also on the dashboard: the **live send gate** (all six checks for this week's issue), a week timeline, the **audit trail** of every Telegram review action, every send attempt including those the gate held, the delivery-mode and list-hygiene panels, and [the email preview](https://the-dispatch-pi.vercel.app/preview)
+  - [Articles](https://the-dispatch-pi.vercel.app/articles): every article collected this week and what the pipeline decided (duplicate of which story and how similar, seen in which past issue, candidate, picked, removed), with filters and search, plus a **"Check a headline"** box that runs the real dedupe rule against this week and the last four issues
   - [Archive](https://the-dispatch-pi.vercel.app/issues) and issue pages, [style guide](https://the-dispatch-pi.vercel.app/style-guide), [health](https://the-dispatch-pi.vercel.app/api/health)
 - **Editor bot:** Telegram `@thedispatchdesk_bot` (answers only Shreya's Telegram id)
 - **Components Map:** [`docs/Components-Map.xlsx`](docs/Components-Map.xlsx)

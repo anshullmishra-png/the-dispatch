@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { lastFourList } from "@/lib/site/proof";
 import { articleLibrary, LIBRARY_FILTERS, type LibraryFilter } from "@/lib/site/queries";
+import { HeadlineCheck } from "./headline-check";
 import { formatIssueDateShort, formatIstDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +16,7 @@ const LABELS: Record<LibraryFilter, string> = {
   picked: "Picked",
   duplicate: "Duplicates",
   seen_before: "In last 4 issues",
-  rejected: "Removed by Shreya",
+  rejected: "Swapped or removed",
 };
 
 const STATUS_TEXT: Record<string, string> = {
@@ -37,7 +39,7 @@ export default async function Articles({ searchParams }: Props) {
   const sp = await searchParams;
   const filter = (sp.status && sp.status in LIBRARY_FILTERS ? sp.status : "all") as LibraryFilter;
   const q = sp.q ?? "";
-  const data = await articleLibrary(filter, q);
+  const [data, lastFour] = await Promise.all([articleLibrary(filter, q), lastFourList()]);
   if (!data) {
     return (
       <section className="section">
@@ -56,6 +58,27 @@ export default async function Articles({ searchParams }: Props) {
         and what the pipeline decided: a <b>duplicate</b> of another outlet&rsquo;s story this week, <b>seen before</b> in one of the last
         four issues, a <b>candidate</b> sent to Gemini, or <b>picked</b>.
       </p>
+
+      <div className="grid-2" style={{ marginTop: 32, alignItems: "start" }}>
+        <HeadlineCheck examples={lastFour.flatMap((i) => i.headlines.slice(0, 1)).slice(0, 3)} />
+        <div className="stack">
+          <p className="eyebrow">The exclusion set</p>
+          <h2 className="card-heading">Stories from the last four issues</h2>
+          <p style={{ fontSize: 16 }}>
+            Every new article and every Gemini pick is checked against these {lastFour.reduce((n, i) => n + i.headlines.length, 0)} stories. A match
+            becomes <b>seen before</b> and is never sent to Gemini; a pick that still matches is rejected and re-prompted. The count is 0 this week
+            because none of this week&rsquo;s stories repeat them. Paste one into the checker to see the rule fire.
+          </p>
+          <ul className="past-list">
+            {lastFour.map((i) => (
+              <li key={i.issueDate}>
+                <span className="ui-label">{formatIssueDateShort(i.issueDate)}</span> {i.headlines.length} stories: {i.headlines.slice(0, 3).join(" · ")}
+                {i.headlines.length > 3 ? " …" : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       <nav className="filters" aria-label="Filter by status">
         {(Object.keys(LIBRARY_FILTERS) as LibraryFilter[]).map((f) => (

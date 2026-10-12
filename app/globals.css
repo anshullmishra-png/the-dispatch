@@ -619,6 +619,54 @@ td.why {
   margin-top: var(--space-2);
 }
 
+.timeline {
+  list-style: none;
+}
+.timeline li {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: var(--rule-faint);
+}
+.t-mark {
+  flex: none;
+  width: 24px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--ink);
+}
+.t-done .t-mark,
+.t-failed .t-mark {
+  color: var(--red);
+}
+.timeline p {
+  font-size: 16px;
+}
+.checks {
+  list-style: none;
+  margin-top: var(--space-3);
+}
+.checks li {
+  font-size: 16px;
+  padding: var(--space-1) 0;
+}
+.checks li.no {
+  font-weight: 700;
+}
+.checks span {
+  display: inline-block;
+  width: 20px;
+  font-weight: 700;
+}
+.past-list {
+  list-style: none;
+}
+.past-list li {
+  font-size: 16px;
+  padding: var(--space-2) 0;
+  border-top: var(--rule-faint);
+}
+
 /* ---------------------------------------------------------------- footer */
 
 .footer {
