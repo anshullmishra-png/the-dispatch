@@ -82,8 +82,7 @@ export function renderIssueHtml(issue: IssueEmail, links: RenderLinks): string {
 ${issue.stories.map(storyRow).join("")}
 <tr><td style="padding:32px 40px 0 40px;"><div style="border-top:1px solid ${RED};font-size:0;line-height:0;">&nbsp;</div></td></tr>
 <tr><td style="padding:16px 40px 28px 40px;font-family:${SERIF};font-size:13px;line-height:1.5;color:${INK};">
-  You get this because you subscribed at <a href="${esc(links.appUrl)}" style="color:${INK};">${esc(links.appUrl.replace(/^https?:\/\//, ""))}</a>.
-  Picked by AI, reviewed and confirmed by Shreya before sending. ${unsub}.
+  You get this because you subscribed to The Dispatch. Picked by AI, reviewed and confirmed by Shreya before sending. ${unsub}.
 </td></tr>
 </table></td></tr></table>
 </body></html>`;
@@ -94,7 +93,7 @@ export function renderIssueText(issue: IssueEmail, links: RenderLinks): string {
   for (const s of issue.stories) {
     lines.push(`${s.position}. [${topicLabel(s.topic).toUpperCase()}] ${s.headline}`, s.commentary, `Read at ${s.publisher || hostOf(s.url)}: ${s.url}`, "");
   }
-  lines.push("---", `You get this because you subscribed at ${links.appUrl}.`);
+  lines.push("---", "You get this because you subscribed to The Dispatch.");
   if (links.unsubscribeUrl) lines.push(`Unsubscribe: ${links.unsubscribeUrl}`);
   return lines.join("\n");
 }

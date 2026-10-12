@@ -4,7 +4,7 @@ import Link from "next/link";
 import { sendLog } from "@/db/schema";
 import { loadReview, type ReviewState } from "@/lib/approval/review";
 import { db } from "@/lib/db";
-import { sendAttempts, voiceChecks } from "@/lib/site/proof";
+import { jobAlerts, lastFourChecks, sendAttempts, voiceChecks } from "@/lib/site/proof";
 import { dashboardData } from "@/lib/site/queries";
 import { upcomingJobs } from "@/lib/site/schedule";
 import { formatFlag, topicLabel } from "@/lib/telegram/cards";
@@ -77,9 +77,11 @@ export default async function Desk({ searchParams }: Props) {
   // Only while the issue is actually held: a later Confirm makes an old held run history, not the outcome.
   const heldRun = status === "HELD" ? attempts.find((a) => a.issueDate === review.issue.issueDate && a.outcome.includes("held")) : undefined;
   const voice = await voiceChecks(review.livePicks.map((p) => ({ id: p.id, text: p.commentary })));
+  const [l4, alerts] = await Promise.all([lastFourChecks(review.issue.issueDate, review.livePicks), jobAlerts(issueId, status)]);
   const flagged = review.livePicks.filter((p) => p.flags.some((f) => f.startsWith("ungrounded"))).length;
   const out = review.picks.filter((p) => p.state === "SWAPPED_OUT");
   const attention = [
+    ...alerts,
     ...(status === "IN_REVIEW" && review.summary.counts.PENDING ? [`${review.summary.counts.PENDING} ${review.summary.counts.PENDING === 1 ? "story still needs" : "stories still need"} your decision.`] : []),
     ...(flagged && open && status !== "CONFIRMED" ? [`${flagged} ${flagged === 1 ? "story has" : "stories have"} a ⚠ fact flag: a number or name not found in the source. Check before confirming.`] : []),
     ...review.summary.warnings,
@@ -122,7 +124,7 @@ export default async function Desk({ searchParams }: Props) {
                 ? `${delivered.sent} real ${delivered.sent === 1 ? "email" : "emails"}, ${delivered.skipped.toLocaleString("en-IN")} synthetic addresses skipped (demo mode), ${delivered.failed} failed.`
                 : heldRun
                   ? `${formatIstDateTime(heldRun.at)}: not confirmed, nothing was sent.`
-                  : "Confirmed is not sent: the email leaves only at the Thursday run."}
+                  : "Scheduled for Thursday morning. Nothing has been sent to subscribers yet."}
             </p>
           </div>
         </div>
@@ -143,7 +145,7 @@ export default async function Desk({ searchParams }: Props) {
             )}
             <p className="muted" style={{ fontSize: 16 }}>
               {d.figures.fetched.toLocaleString("en-IN")} articles read · {d.figures.duplicates} duplicates dropped · {review.livePicks.length} stories picked across{" "}
-              {Object.keys(review.summary.topics).length} topics · <Link href="/status">System status</Link>
+              {Object.keys(review.summary.topics).length} topics · <Link href="/status">Settings &amp; status</Link>
             </p>
           </div>
 
@@ -233,6 +235,7 @@ export default async function Desk({ searchParams }: Props) {
                   {v ? (
                     <p className="ui-label" style={{ marginTop: 8 }}>
                       {v.sentences} sentences · {v.words} words · voice check {v.errors.length ? `✗ ${v.errors.join(", ")}` : "✓"}
+                      {p.id in l4 ? (l4[p.id] ? ` · ! matches the ${l4[p.id]} issue` : " · ✓ not in the last 4 issues") : ""}
                     </p>
                   ) : null}
 

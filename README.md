@@ -3,9 +3,9 @@
 An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosystem
 (Problem Statement 17, MESA Cohort C4 — AI and its Applications).
 
-- **Live site:** https://the-dispatch-pi.vercel.app
+- **Live app:** https://the-dispatch-pi.vercel.app opens Shreya's desk. The app is for her, the editor; subscribers only receive the email (and its unsubscribe page)
   - [Editor's desk](https://the-dispatch-pi.vercel.app/desk): Shreya's workspace. Her review, the scheduled delivery and the actual delivery outcome as three separate states; what needs her attention; every story with Gemini's reason, fact flags and voice check; alternatives; email preview. Keep, edit, swap, remove and confirm work here too: the same backend, audit trail and send gate as Telegram, and her Telegram cards update. **Open for the demo** (no sign-in), so anyone can try it; demo mode keeps real mail to the allowlist
-  - [System status](https://the-dispatch-pi.vercel.app/status): issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
+  - [Settings & status](https://the-dispatch-pi.vercel.app/status): editorial voice, sources, Telegram, schedule, then issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
   - Also on the dashboard: the **live send gate** (all six checks for this week's issue), a week timeline, the **audit trail** of every Telegram review action, every send attempt including those the gate held, the delivery-mode and list-hygiene panels, and [the email preview](https://the-dispatch-pi.vercel.app/preview)
   - [Articles](https://the-dispatch-pi.vercel.app/articles): every article collected this week and what the pipeline decided (duplicate of which story and how similar, seen in which past issue, candidate, picked, removed), with filters and search, plus a **"Check a headline"** box that runs the real dedupe rule against this week and the last four issues
   - [Archive](https://the-dispatch-pi.vercel.app/issues) and issue pages, [style guide](https://the-dispatch-pi.vercel.app/style-guide), [health](https://the-dispatch-pi.vercel.app/api/health)
@@ -79,7 +79,7 @@ All in [`.env.example`](.env.example). `GET /api/health` shows which integration
 
 ## Demo script (5 minutes)
 
-1. **Site.** Landing, archive, dashboard (picks + reasons, pipeline strip, runs, voice match), articles (filter "Duplicates" to show what dedupe caught and why).
+1. **Desk.** Open the URL: this week's issue, her three states (review · scheduled delivery · outcome), what needs attention, the picks with Gemini's reasons. Then Articles (filter "Duplicates", try "Check a headline") and Settings & status (send gate, audit trail, runs).
 2. **Week on demand.** `npm run demo:week -- --reset` — ingest ×3 (second and third add 0 new: R2), curate (8–10 picks, ≥3 topics, signal tags, flags: R4–R8).
 3. **Telegram.** Cards arrive on the phone. Keep one, Edit one (a one-sentence edit is caught by the voice check), Swap one (a backup takes its place, no AI call), Remove one (refused if it would leave fewer than 8 stories or 3 topics). Confirm while a story is pending → refused. Approve all → Confirm (R9–R11). The script waits for the Confirm.
 4. **Control proof.** Edit after confirming → "please confirm again", status back to review (R12, X2).

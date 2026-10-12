@@ -2,14 +2,14 @@
 // trail, the week's timeline, send attempts and list hygiene. Read-only; no
 // subscriber addresses or secrets leave this module.
 import { and, asc, desc, eq, sql } from "drizzle-orm";
-import { approvals, emailEvents, issues, issueStories, pipelineRuns, styleGuides, subscribers } from "@/db/schema";
+import { approvals, emailEvents, issues, issueStories, pipelineRuns, sources, styleGuides, subscribers, telegramMessages } from "@/db/schema";
 import { checkSendAllowed, computeContentHash, type IssueStatus, type SendFailure } from "@/lib/approval/fsm";
 import { parseNeverSay, splitSentences, voiceLint, wordCount } from "@/lib/curate/lint";
 import { db } from "@/lib/db";
 import { extractEntities, normalizeTitle } from "@/lib/dedupe/normalize";
 import { judgePair } from "@/lib/dedupe/engine";
 import { loadLastFourSet, matchLastFour } from "@/lib/dedupe/history";
-import { env } from "@/lib/env";
+import { configuredFeatures, env } from "@/lib/env";
 import { formatIstDateTime, istDate, targetIssueDate } from "@/lib/time";
 import { upcomingJobs } from "./schedule";
 
@@ -94,6 +94,59 @@ export async function auditTrail(issueId: string) {
       who: r.actor === null ? "system" : shreya && String(r.actor) === shreya ? "Shreya (Telegram)" : "other",
     };
   });
+}
+
+// ---------------------------------------------------------------- settings
+
+export async function settingsData() {
+  const [guide] = await db().select({ version: styleGuides.version }).from(styleGuides).where(eq(styleGuides.active, true));
+  const [src] = await db()
+    .select({
+      rss: sql<number>`count(*) filter (where ${sources.kind} = 'rss' and ${sources.active})::int`,
+      gnews: sql<number>`count(*) filter (where ${sources.kind} = 'gnews' and ${sources.active})::int`,
+    })
+    .from(sources);
+  const [tg] = await db().select({ at: sql<Date | null>`max(${telegramMessages.createdAt})` }).from(telegramMessages);
+  const f = configuredFeatures();
+  return {
+    styleGuideVersion: guide?.version ?? null,
+    rss: src?.rss ?? 0,
+    gnews: src?.gnews ?? 0,
+    telegram: f.telegram && f.telegramAllowlist,
+    lastTelegramAt: tg?.at ? new Date(tg.at) : null,
+  };
+}
+
+// ---------------------------------------------------------------- job alerts for the desk
+
+/** Plain-language alerts when the latest run of a job for this issue failed (no stack traces). */
+export async function jobAlerts(issueId: string, status: IssueStatus): Promise<string[]> {
+  const runs = await db()
+    .select({ job: pipelineRuns.job, ok: pipelineRuns.ok, error: pipelineRuns.error, startedAt: pipelineRuns.startedAt })
+    .from(pipelineRuns)
+    .where(eq(pipelineRuns.issueId, issueId))
+    .orderBy(desc(pipelineRuns.startedAt));
+  const latest = new Map<string, (typeof runs)[number]>();
+  for (const r of runs) if (!latest.has(r.job) && r.ok !== null) latest.set(r.job, r);
+  const when = (r: { startedAt: Date }) => formatIstDateTime(r.startedAt);
+  const out: string[] = [];
+  const ingest = latest.get("ingest");
+  if (ingest && !ingest.ok) out.push(`Article collection failed at ${when(ingest)}. It retries at the next scheduled run.`);
+  const curate = latest.get("curate");
+  if (curate && !curate.ok) {
+    out.push(
+      /gemini/i.test(curate.error ?? "")
+        ? `Gemini couldn't draft at ${when(curate)} (the service was busy). The draft below is from the last successful run.`
+        : `Drafting failed at ${when(curate)}. The draft below is from the last successful run.`,
+    );
+  }
+  const notify = latest.get("notify");
+  if (notify && !notify.ok) out.push(`The Telegram draft couldn't be delivered at ${when(notify)}. You can review everything here instead.`);
+  const remind = latest.get("remind");
+  if (remind && !remind.ok) out.push(`The Wednesday reminder couldn't be sent at ${when(remind)}.`);
+  const send = latest.get("send");
+  if (send && !send.ok && status !== "SENT" && !(send.error ?? "").startsWith("held")) out.push(`The email job failed at ${when(send)}. Nothing was sent.`);
+  return out;
 }
 
 // ---------------------------------------------------------------- week timeline

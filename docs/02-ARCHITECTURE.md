@@ -102,7 +102,7 @@ tests/
 | `/api/cron/send` | GET | `CRON_SECRET` | `assertSendAllowed()` → `sendIssue()` | `send_log`, `issues.status` |
 | `/api/telegram/webhook` | POST | secret header + allowlist | `onCallback`/`onMessage` | `issue_stories`, `approvals`, `telegram_pending` |
 | `/api/webhooks/resend` | POST | Svix signature | `hygiene.*` | `email_events`, `subscribers` |
-| `/api/subscribe` | POST | none (rate limited) | validate email | `subscribers` |
+| ~~`/api/subscribe`~~ | — | — | removed 2026-10-12 (Shreya-only app, see DECISIONS) | — |
 | `/api/unsubscribe` | GET/POST | signed token | `applyUnsubscribe()` | `subscribers` |
 | `/api/admin/run/[job]` | POST | `ADMIN_TOKEN` | any cron job with `force` flag | per job |
 | `/api/admin/telegram-setup` | POST | `ADMIN_TOKEN` | `setWebhook` | none |
