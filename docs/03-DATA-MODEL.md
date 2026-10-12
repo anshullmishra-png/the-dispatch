@@ -113,6 +113,7 @@ create table telegram_pending (                  -- waiting for Shreya's edit te
   issue_id uuid not null references issues(id) on delete cascade,
   story_id uuid not null references issue_stories(id) on delete cascade,
   prompt_message_id bigint not null,
+  pending_text text,                             -- edit that failed voice lint, kept for "Use anyway" (migration 0002)
   expires_at timestamptz not null
 );
 

@@ -136,3 +136,30 @@ Checked against official provider docs on 2026-10-12.
 | 2026-10-12 | Within-window matching compares against all already-classified articles of the issue, not only earlier-published ones | GNews delivers with a 12 h delay, so an older article can arrive after a newer copy. `duplicate_of` still points to the cluster root of the earliest match, and `pickRepresentatives` picks the earliest-published member anyway |
 | 2026-10-12 | SQL prefilter `title_norm % $1` uses pg_trgm's default threshold 0.3, which is strict (`>`) | Pairs scoring exactly 0.300 are excluded; immaterial in practice and keeps the GIN index usable over the Neon HTTP driver (no session `SET`) |
 | 2026-10-12 | Dedupe runs inside every ingest (after inserts), so articles are classified on arrival | Curate (Phase 4) only reads `candidate` representatives; `classifyNewArticles` is idempotent (touches only `new` rows) and can also be called by curate |
+| 2026-10-12 | Telegram: an edit is accepted as the next plain text message too, not only as a reply to the force-reply prompt | Telegram Desktop sometimes drops the reply link. Only one edit can be pending per chat and it expires after 30 min |
+| 2026-10-12 | Telegram: one live summary card. After an Edit or Swap the summary is re-posted at the bottom and the old one loses its buttons; stale taps get "out of date" + a fresh card | Keeps Confirm next to the latest state. The stale-card guard (hash prefix) still protects any card left behind |
+| 2026-10-12 | `telegram_pending.pending_text` column (migration 0002) and a `u:<story8>` "Use anyway" callback | docs/05 §3 asks for an override when voice lint fails; the rejected text must be kept until she taps it. The override is logged in `approvals.detail.lintOverride` |
+| 2026-10-12 | `/status` bot command re-posts this week's summary card | Recovery path when the chat scrolls away; read-only |
+| 2026-10-12 | Swap marks the swapped-out article `rejected` | A forced re-curate then never re-picks a story Shreya removed |
+| 2026-10-12 | Unedited commentary is stored as `style_examples` (similarity 1.0) at Confirm, replaced on re-confirm; an edit stores one row per story (a re-edit replaces it) | docs/04 §11; avoids double-counting in the voice-match metric |
+| 2026-10-12 | "Send now" (`n:<issue8>`) shown only on a confirmed issue whose Thursday has arrived (IST) | After the Thursday job holds an issue the next scheduled send is a week away. It runs `runSend` through the same gate |
+| 2026-10-12 | Send claims batches with one `INSERT ... SELECT ... ON CONFLICT DO NOTHING RETURNING` instead of `FOR UPDATE SKIP LOCKED` | The unique `(issue_id, subscriber_id)` row is the lock: overlapping runs can never claim the same subscriber, and it works over the Neon HTTP driver |
+| 2026-10-12 | Demo mode really sends to `SEND_ALLOWLIST` plus Resend's `delivered@`/`bounced@`/`complained@resend.dev` (approved test inboxes) | Their real webhook events prove R16 end to end |
+| 2026-10-12 | Resend idempotency key = `<issueId>-<contentHash12>-b<batch>` (was `<issueId>-b<batch>`) | Found in the Phase 9 rehearsal: after a reset, batch 1 reused a key with a different body and Resend refused it. The content hash keeps retries deduped and new content distinct |
+| 2026-10-12 | `assertSendAllowed({resuming})` accepts `SENDING` for a resumed send; every other guard still applies | A send that runs out of time must be able to continue; unit-tested |
+| 2026-10-12 | Resend webhook created by `scripts/resend-webhook.ts` through the Resend API (no dashboard step); Svix verification written with `node:crypto` | Only `lib/mail/send.ts` may import the Resend SDK; no extra dependency |
+| 2026-10-12 | Web subscribers are stored `active` (source `web`), no double opt-in | The free `resend.dev` sender can't mail anyone but the owner, so a confirmation email needs a verified domain. Demo mode means they get nothing real anyway. Honeypot field against bots |
+| 2026-10-12 | Landing marquee `clamp(44px, 16vw, 304px)` (doc: `clamp(72px, 18vw, 304px)`) | 72 px made "DISPATCH" overflow the frame at 375 px wide |
+| 2026-10-12 | Dashboard admin strip (Run now / simulate buttons) not built; `POST /api/admin/run/[job]`, `/api/admin/simulate` and `npm run demo:week` cover it | Time; the demo does not need an admin cookie flow |
+| 2026-10-12 | `npm run demo:week -- --reset` resets this week's issue to COLLECTING (keeps articles; drops draft, reviews, send log) | The 15 Oct issue was already sent by the Phase 7 test; a rehearsal needs a fresh draft on live data. `--auto-confirm` taps Approve all + Confirm as Shreya through the signed webhook |
+| 2026-10-12 | The "second Telegram account is ignored" check is automated (unit test + `npm run e2e:telegram` posts as a stranger) | The user has no second account |
+
+## Phases 6–10 (2026-10-12)
+
+| Item | Decision |
+|---|---|
+| Telegram bot | `@thedispatchdesk_bot`, new (not the Skinstinct bot). `SHREYA_TG_USER_ID` = `SHREYA_TG_CHAT_ID` = the user's id from `/start` |
+| Manual phone test | User asked to automate testing because of the 11 PM deadline: `npm run e2e:telegram` (17 checks) and `npm run e2e:send` (21 checks) run against production; the user's own taps (Keep, Approve all, Confirm) were also logged |
+| Resend | Account on `anshullmishra@gmail.com`, full-access key, sender `onboarding@resend.dev` (no domain) |
+| Stop after each phase | Replaced by "complete all phases, test once done" (user, Phase 6) |
+

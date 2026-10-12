@@ -73,16 +73,16 @@ Use `npm run demo:week`, or the admin "Run now" buttons on `/dashboard`. Say wha
 
 ## 5. Submission checklist
 
-- [ ] Public Vercel URL loads: landing, archive, dashboard, unsubscribe
-- [ ] GitHub repo link (public or access given), no secrets in history
-- [ ] Components Map (`.xlsx`) in the repo and attached
-- [ ] README: overview, setup, env vars, demo script, limits, Q&A answers
-- [ ] `.env.example` complete
-- [ ] `vercel.json` crons registered (screenshot of Vercel Cron page)
-- [ ] Seed data loaded on production DB (sources, 4 past issues, subscribers, style guide)
-- [ ] Telegram webhook set to the production URL; bot only answers Shreya's ID
-- [ ] Resend webhook set to production URL and verified with a test event
-- [ ] One full live run completed on production within the last day (dashboard shows it)
-- [ ] All R1–R20 verified against `docs/01-PRODUCT-SPEC.md`
-- [ ] Known limits listed honestly in the README
-- [ ] Demo rehearsed twice; fallback plan if a free tier is exhausted (`GEMINI_MOCK` fixture run + screenshots of an earlier live run)
+- [x] Public Vercel URL loads: landing, archive, dashboard, unsubscribe (checked desktop + 375 px, no console errors)
+- [x] GitHub repo link (public), no secrets in history (value scan of `git log -p --all`: 0 hits; only `.env.example` ever committed)
+- [x] Components Map (`.xlsx`) in the repo (`docs/Components-Map.xlsx`) — attach it to the submission yourself
+- [x] README: overview, setup, env vars, demo script, limits, Q&A answers
+- [x] `.env.example` complete (every key in `lib/env.ts`)
+- [x] `vercel.json` crons registered (`vercel crons ls`: 5 jobs) — take the dashboard screenshot yourself
+- [x] Seed data loaded on production DB (sources, 4 past issues, subscribers, style guide)
+- [x] Telegram webhook set to the production URL; bot only answers Shreya's ID (`e2e:telegram`)
+- [x] Resend webhook set to production URL and verified with a signed test event and Resend's real events (`e2e:send`)
+- [x] One full live run completed on production within the last day (`demo:week`, 2026-10-12)
+- [x] All R1–R20 verified against `docs/01-PRODUCT-SPEC.md` (README "Requirements → evidence")
+- [x] Known limits listed honestly in the README
+- [x] Demo rehearsed twice (`demo:week` ×2 on production); fallback: `GEMINI_MOCK` fixture run + the dashboard's run history

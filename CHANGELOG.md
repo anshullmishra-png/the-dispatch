@@ -1,5 +1,34 @@
 # Changelog
 
+## Phase 10 — Hardening and submission (2026-10-12)
+
+- README: overview, architecture, setup, env vars, demo script, known limits, examiner Q&A. Components Map in `docs/Components-Map.xlsx`.
+- Final secret scan of the git history.
+
+## Phase 9 — Crons and full rehearsal (2026-10-12)
+
+- `vercel.json` crons registered (5 jobs). `npm run demo:week` (ingest x3, curate, notify, confirm, remind, send) completed on production.
+- `POST /api/admin/run/[job]`; send accepts `force` (the gate still decides).
+- Fix found in the rehearsal: the Resend idempotency key now includes the confirmed content hash.
+
+## Phase 8 — Public site and dashboard (2026-10-12)
+
+- Trattoria broadsheet tokens, fonts (next/font: Playfair Display, Bitter, PT Sans), paper grain, rulebox frame.
+- Pages: landing (marquee, subscribe, latest issue), archive, issue web view, dashboard (figures, runs, sources, bars, voice match, 30 s refresh), unsubscribe card. `/api/subscribe` with format, duplicate and honeypot checks.
+
+## Phase 7 — Email and send (2026-10-12)
+
+- `lib/mail`: template + text, HMAC unsubscribe tokens, Svix check, `sendIssue` (gate first, batches of 100, demo mode, resumable), `runSend` (hold + alert when unconfirmed).
+- Routes: `/api/cron/send`, `/api/unsubscribe`, `/unsubscribe`, `/api/webhooks/resend`, `/api/admin/simulate`. Resend webhook created via the API.
+- `npm run e2e:send`: 21 checks on production, including Resend's real bounce and complaint events.
+
+## Phase 6 — Telegram (2026-10-12)
+
+- `lib/telegram`: fetch client (retry once, 350 ms spacing, token never in errors), cards, delivery bookkeeping, handlers with a Shreya-only allowlist.
+- `lib/approval/review.ts`: Keep, Edit (voice lint + override), Swap (no AI call, keeps 3 topics), Approve all, Confirm, Hold.
+- Routes: `/api/telegram/webhook`, `/api/admin/telegram-setup`, `/api/cron/notify`, `/api/cron/remind`. Curate alerts on a thin draft.
+- `npm run e2e:telegram`: 17 checks against the live webhook.
+
 ## Phase 5 — State machine and send gate (2026-10-12)
 
 - `lib/approval/fsm.ts`: event table (`nextStatus`), `hashContent`, pure guards `checkConfirm` / `checkSendAllowed` (the six conditions) / `draftDeliverable`, and DB functions `transition()` (row-locked, writes the approvals audit trail), `computeContentHash`, `assertSendAllowed` (fails closed without `SHREYA_TG_USER_ID`).

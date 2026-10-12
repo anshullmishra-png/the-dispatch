@@ -111,6 +111,8 @@ Plain `fetch` to `https://api.telegram.org/bot<TOKEN>/<method>`. No bot framewor
 **Reminder card (remind job):** one message "No confirmation yet for Thursday's issue" with the same Confirm/Hold buttons, only if status is `IN_REVIEW`.
 **Alert card:** used by send and curate jobs when something needs her attention.
 
+**As implemented (2026-10-12):** an edit is also accepted as the next plain message while one is pending; the summary card is re-posted after Edit/Swap and the old one loses its buttons; "Use anyway" is `u:<story8>` with the text kept in `telegram_pending.pending_text`; `/status` re-posts the summary; "Send now" appears on a confirmed issue once its Thursday has arrived. See `DECISIONS.md`.
+
 ## 4. Resend — `lib/mail/*`
 
 - Only `lib/mail/send.ts` imports `resend`.
@@ -136,6 +138,8 @@ Plain `fetch` to `https://api.telegram.org/bot<TOKEN>/<method>`. No bot framewor
 - Resend webhooks must be configured in the Resend dashboard pointing at `APP_URL/api/webhooks/resend`.
 
 **Simulation (X6):** `POST /api/admin/simulate {action:'bounce'|'complaint'|'unsubscribe', email}` (needs `ADMIN_TOKEN` and `DEMO_MODE`) runs the same `hygiene.*` functions the webhook uses, so you can demo R15/R16 without real bounces.
+
+**As implemented (2026-10-12):** claim = `INSERT ... SELECT ... ON CONFLICT DO NOTHING RETURNING` on the unique send_log row; idempotency key `<issueId>-<contentHash12>-b<batch>`; the webhook is created by `scripts/resend-webhook.ts` and verified with `node:crypto` (`lib/mail/svix.ts`).
 
 ## 5. Unsubscribe — `lib/mail/tokens.ts`, `/api/unsubscribe`
 
