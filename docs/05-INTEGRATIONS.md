@@ -137,13 +137,14 @@ Plain `fetch` to `https://api.telegram.org/bot<TOKEN>/<method>`. No bot framewor
 ## 6. Neon — `lib/db.ts`
 
 - `DATABASE_URL` = pooled string. Use `drizzle-orm/neon-http` for simple reads/writes and `drizzle-orm/neon-serverless` (WebSocket `Pool`) wherever a transaction is needed.
-- Region (verified 2026-10-12): **AWS US East (N. Virginia), us-east-1**, next to Vercel's default function region `iad1`. Neon has no India region (nearest: Singapore). `pg_trgm`, `citext`, `pgcrypto` are supported. Free plan: 100 CU-hours/project, 1 GB storage/project, scale-to-zero after 5 min (expect a cold-start delay on the first query).
+- Region (user decision 2026-10-12): **AWS Asia Pacific (Singapore), ap-southeast-1**, with Vercel functions pinned to `sin1` via `vercel.json` `regions` so app and DB share a region. Neon has no India region; Vercel's Hobby plan allows one selectable function region (default `iad1`). A Neon project's region cannot be changed after creation. `pg_trgm`, `citext`, `pgcrypto` are supported. Free plan: 100 CU-hours/project, 1 GB storage/project, scale-to-zero after 5 min (expect a cold-start delay on the first query).
 - Migrations run from `npm run db:migrate`, never at request time.
 
 ## 7. Vercel — `vercel.json`
 
 ```json
 {
+  "regions": ["sin1"],
   "crons": [
     { "path": "/api/cron/ingest", "schedule": "0 3 * * 1-3" },
     { "path": "/api/cron/curate", "schedule": "0 9 * * 3" },

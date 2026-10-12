@@ -9,3 +9,4 @@
 - `@types/node` raised to ^24 to satisfy Vitest 5's peer range and match the Node 24 runtime.
 - Turned off `cacheComponents`/`partialPrefetching` (scaffold defaults) so routes can declare `runtime = 'nodejs'` per the docs.
 - Recorded user decisions and verified provider limits in `docs/DECISIONS.md`; updated `01`, `02`, `04` and `05` docs to match.
+- Pushed to GitHub and connected the repo to Vercel. Added `vercel.json` pinning functions to Singapore (`sin1`) to sit next to the Neon database.

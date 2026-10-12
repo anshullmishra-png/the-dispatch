@@ -17,7 +17,7 @@ Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md). Live:
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 | Foundations, decisions, deploy | Deployed — awaiting GitHub repo link |
+| 0 | Foundations, decisions, deploy | Done |
 | 1 | Database and seed | — |
 | 2 | Ingest | — |
 | 3 | Dedupe | — |

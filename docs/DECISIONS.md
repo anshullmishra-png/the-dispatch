@@ -37,6 +37,8 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 | Send cron time | `0 2 * * 4` → fires Thu 07:30–08:29 IST | Map says "Thu 8 AM". **User updates the map text** to the hourly window |
 | Issue window | Contiguous: Thu 00:00 IST → Wed 23:59:59.999 IST | Original Thu 09:00 start left Thu 00:00–08:59 unassigned |
 | Phase gating | Stop after every phase for the user's sign-off | |
+| Region | Neon in AWS Asia Pacific (Singapore) `ap-southeast-1`; Vercel functions pinned to `sin1` (`vercel.json` `regions`) | User is in India; app and DB must share a region because each job runs hundreds of queries. Neon has no India region. Replaces the earlier US East suggestion |
+| GitHub | https://github.com/anshullmishra-png/the-dispatch, connected to the Vercel project (pushes to `main` deploy to production) | |
 
 ## Open
 
@@ -60,7 +62,7 @@ Checked against official provider docs on 2026-10-12.
 | Resend free-tier daily/monthly caps | 100/day, 3,000/month | 2026-10-12 |
 | Resend batch size and rate limit | Batch ≤100 emails per call (≤50 `to` each, no attachments); 10 req/s per team; `Idempotency-Key` supported on batch (≤256 chars, 24 h) | 2026-10-12 |
 | Resend test addresses and webhook event names | `delivered@`, `bounced@`, `complained@resend.dev` (+label OK), new `suppressed@resend.dev`; events `email.delivered`, `email.bounced`, `email.complained`, `email.delivery_delayed` (+ `email.failed`, `email.suppressed`); Svix headers `svix-id`, `svix-timestamp`, `svix-signature` over the raw body. `resend.dev` sender delivers only to the account owner | 2026-10-12 |
-| Neon region options vs Vercel region | AWS us-east-1 (N. Virginia) chosen, next to Vercel `iad1`. No India region (nearest Singapore). `pg_trgm`, `citext`, `pgcrypto` supported. Free: 100 CU-h, 1 GB/project, scale-to-zero after 5 min | 2026-10-12 |
+| Neon region options vs Vercel region | Neon AWS regions: us-east-1/2, us-west-2, eu-central-1, eu-west-2, ap-southeast-1 (Singapore), ap-southeast-2, sa-east-1; no India region. Vercel Hobby: one selectable function region, default `iad1`. Chosen: Singapore + `sin1`. `pg_trgm`, `citext`, `pgcrypto` supported. Free: 100 CU-h, 1 GB/project, scale-to-zero after 5 min | 2026-10-12 |
 | Next.js version | 16.4.0 (released 2026-10-06; a security patch is announced for 2026-10-14 — upgrade when it ships). `runtime='edge'` deprecated; `runtime`/`dynamic`/`revalidate` are rejected under Cache Components | 2026-10-12 |
 
 ## Deviations from docs
