@@ -15,6 +15,13 @@
       "when": 1791798173500,
       "tag": "0001_init",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791810046257,
+      "tag": "0002_telegram_pending_text",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "telegram_pending" ADD COLUMN "pending_text" text;

@@ -11,6 +11,8 @@ import { getOrCreateIssue } from "@/lib/issues";
 import { createLogger } from "@/lib/log";
 import { finishRun, hasBlockingRun, startRun } from "@/lib/runs";
 import { isAuthorizedBearer, isVercelCron } from "@/lib/security";
+import { alertShreya } from "@/lib/telegram/deliver";
+import { formatIssueDateShort } from "@/lib/time";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -64,6 +66,10 @@ export async function GET(req: Request) {
       notes: result.notes,
       replacedDraft: replaced,
     };
+    if (result.needsAttention) {
+      // docs/02 failure table: tell Shreya now rather than padding with weak stories.
+      await alertShreya(issue.id, `Thin draft for ${formatIssueDateShort(issue.issueDate)}`, result.notes, runLog);
+    }
     await finishRun(runId, { ok: true, stats });
     runLog.info("curate finished", { selection: stats.selection, usage: stats.usage });
     return NextResponse.json({ ok: true, runId, issueDate: issue.issueDate, ...stats, attempts: result.attempts.length });

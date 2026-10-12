@@ -200,6 +200,8 @@ export const telegramPending = pgTable("telegram_pending", {
     .notNull()
     .references(() => issueStories.id, { onDelete: "cascade" }),
   promptMessageId: tgId("prompt_message_id").notNull(),
+  // An edit that failed voice lint, held until Shreya taps "Use anyway" or resends.
+  pendingText: text("pending_text"),
   expiresAt: tstz("expires_at").notNull(),
 });
 

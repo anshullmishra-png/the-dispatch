@@ -7,7 +7,7 @@ import { requireEnv } from "@/lib/env";
 
 export type Db = NeonHttpDatabase<typeof schema>;
 export type TxDb = NeonDatabase<typeof schema>;
-type Tx = Parameters<Parameters<TxDb["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<TxDb["transaction"]>[0]>[0];
 
 let httpDb: Db | undefined;
 

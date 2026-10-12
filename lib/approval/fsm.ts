@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { approvals, articles, issues, issueStories } from "@/db/schema";
-import { db, withTransaction } from "@/lib/db";
+import { db, type Tx, withTransaction } from "@/lib/db";
 import { requireEnv } from "@/lib/env";
 
 export type IssueStatus = "COLLECTING" | "DRAFTING" | "IN_REVIEW" | "CONFIRMED" | "SENDING" | "SENT" | "HELD";
@@ -230,6 +230,13 @@ export interface TransitionResult {
   confirmationVoided?: boolean;
 }
 
+/** Shape of the live draft, for the notify guard. */
+export async function loadDraftShape(issueId: string, exec: Executor = db()): Promise<DraftShape> {
+  const [issue] = await exec.select({ needsAttention: issues.needsAttention }).from(issues).where(eq(issues.id, issueId));
+  const picks = await loadLivePicks(exec, issueId);
+  return { livePicks: picks.length, topics: new Set(picks.map((p) => p.topic)).size, needsAttention: issue?.needsAttention ?? false };
+}
+
 /**
  * Applies `event` to the issue inside a transaction with the row locked:
  * checks the transition and its guards, updates the issue, and writes the
@@ -237,71 +244,76 @@ export interface TransitionResult {
  * after drafting (curate's own move to DRAFTING goes through nextStatus too).
  */
 export async function transition(issueId: string, event: IssueEvent, opts: TransitionOptions = {}): Promise<TransitionResult> {
-  return withTransaction(async (tx) => {
-    const [issue] = await tx
-      .select({ status: issues.status, needsAttention: issues.needsAttention })
-      .from(issues)
-      .where(eq(issues.id, issueId))
-      .for("update");
-    if (!issue) throw new Error(`issue ${issueId} not found`);
-    const from = issue.status;
-    const to = nextStatus(from, event);
-    const audit = (action: (typeof approvals.$inferInsert)["action"], contentHash: string | null = null) =>
-      tx.insert(approvals).values({ issueId, action, actorTgId: opts.actorTgId ?? null, contentHash, detail: opts.detail ?? null });
+  return withTransaction((tx) => applyTransition(tx, issueId, event, opts));
+}
 
-    if (event === "notify") {
-      const picks = await loadLivePicks(tx, issueId);
-      const shape = { livePicks: picks.length, topics: new Set(picks.map((p) => p.topic)).size, needsAttention: issue.needsAttention };
-      if (!draftDeliverable(shape)) throw new DraftNotDeliverableError(shape);
-      await tx.update(issues).set({ status: to, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
-      return { from, to };
-    }
+/**
+ * transition() inside the caller's transaction, so a content change and the
+ * status change it causes (an edit after confirm) commit together.
+ */
+export async function applyTransition(tx: Tx, issueId: string, event: IssueEvent, opts: TransitionOptions = {}): Promise<TransitionResult> {
+  const [issue] = await tx
+    .select({ status: issues.status })
+    .from(issues)
+    .where(eq(issues.id, issueId))
+    .for("update");
+  if (!issue) throw new Error(`issue ${issueId} not found`);
+  const from = issue.status;
+  const to = nextStatus(from, event);
+  const audit = (action: (typeof approvals.$inferInsert)["action"], contentHash: string | null = null) =>
+    tx.insert(approvals).values({ issueId, action, actorTgId: opts.actorTgId ?? null, contentHash, detail: opts.detail ?? null });
 
-    if (event === "confirm") {
-      const picks = await loadLivePicks(tx, issueId);
-      const freshHash = await computeContentHash(issueId, tx);
-      const failures = checkConfirm({
-        status: from,
-        actorTgId: opts.actorTgId ?? null,
-        shreyaTgId: shreyaId(),
-        pendingPicks: picks.filter((p) => p.state === "PENDING").length,
-        freshHash,
-        cardHash: opts.cardHash,
-      });
-      if (failures.length) throw new ConfirmRejectedError(failures);
-      await tx
-        .update(issues)
-        .set({ status: to, contentHash: freshHash, confirmedAt: sql`now()`, confirmedBy: opts.actorTgId ?? null, updatedAt: sql`now()` })
-        .where(eq(issues.id, issueId));
-      await audit("confirm", freshHash);
-      return { from, to, contentHash: freshHash };
-    }
-
-    if (event === "edit") {
-      if (from === "CONFIRMED") {
-        await tx
-          .update(issues)
-          .set({ status: to, contentHash: null, confirmedAt: null, confirmedBy: null, updatedAt: sql`now()` })
-          .where(eq(issues.id, issueId));
-        await audit("reset_by_edit");
-        return { from, to, confirmationVoided: true };
-      }
-      return { from, to, confirmationVoided: false };
-    }
-
-    if (event === "hold") {
-      await tx.update(issues).set({ status: to, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
-      await audit("hold");
-      return { from, to };
-    }
-
-    if (event === "finish_send") {
-      await tx.update(issues).set({ status: to, sentAt: sql`now()`, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
-      return { from, to };
-    }
-
-    // curate, start_send: status only (start_send is preceded by assertSendAllowed in sendIssue).
+  if (event === "notify") {
+    const shape = await loadDraftShape(issueId, tx);
+    if (!draftDeliverable(shape)) throw new DraftNotDeliverableError(shape);
     await tx.update(issues).set({ status: to, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
     return { from, to };
-  });
+  }
+
+  if (event === "confirm") {
+    const picks = await loadLivePicks(tx, issueId);
+    const freshHash = await computeContentHash(issueId, tx);
+    const failures = checkConfirm({
+      status: from,
+      actorTgId: opts.actorTgId ?? null,
+      shreyaTgId: shreyaId(),
+      pendingPicks: picks.filter((p) => p.state === "PENDING").length,
+      freshHash,
+      cardHash: opts.cardHash,
+    });
+    if (failures.length) throw new ConfirmRejectedError(failures);
+    await tx
+      .update(issues)
+      .set({ status: to, contentHash: freshHash, confirmedAt: sql`now()`, confirmedBy: opts.actorTgId ?? null, updatedAt: sql`now()` })
+      .where(eq(issues.id, issueId));
+    await audit("confirm", freshHash);
+    return { from, to, contentHash: freshHash };
+  }
+
+  if (event === "edit") {
+    if (from === "CONFIRMED") {
+      await tx
+        .update(issues)
+        .set({ status: to, contentHash: null, confirmedAt: null, confirmedBy: null, updatedAt: sql`now()` })
+        .where(eq(issues.id, issueId));
+      await audit("reset_by_edit");
+      return { from, to, confirmationVoided: true };
+    }
+    return { from, to, confirmationVoided: false };
+  }
+
+  if (event === "hold") {
+    await tx.update(issues).set({ status: to, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
+    await audit("hold");
+    return { from, to };
+  }
+
+  if (event === "finish_send") {
+    await tx.update(issues).set({ status: to, sentAt: sql`now()`, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
+    return { from, to };
+  }
+
+  // curate, start_send: status only (start_send is preceded by assertSendAllowed in sendIssue).
+  await tx.update(issues).set({ status: to, updatedAt: sql`now()` }).where(eq(issues.id, issueId));
+  return { from, to };
 }
