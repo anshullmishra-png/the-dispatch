@@ -24,7 +24,7 @@ export async function GET() {
       demoMode: e.DEMO_MODE,
       db: "not_configured",
       configured: configuredFeatures(e),
-      commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+      commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || null,
     });
   } catch (err) {
     if (err instanceof EnvError) {

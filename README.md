@@ -13,11 +13,11 @@ The system never sends without Shreya's explicit confirmation. A code gate (`ass
 
 ## Status
 
-Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md).
+Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md). Live: https://the-dispatch-pi.vercel.app (health: [`/api/health`](https://the-dispatch-pi.vercel.app/api/health)).
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 | Foundations, decisions, deploy | In progress |
+| 0 | Foundations, decisions, deploy | Deployed — awaiting GitHub repo link |
 | 1 | Database and seed | — |
 | 2 | Ingest | — |
 | 3 | Dedupe | — |
