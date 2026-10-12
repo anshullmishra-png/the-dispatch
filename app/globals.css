@@ -806,6 +806,103 @@ td.why {
   background: var(--paper);
 }
 
+.desk-hero .section-heading {
+  margin-top: var(--space-3);
+  max-width: 900px;
+}
+.hero-summary {
+  margin-top: var(--space-3);
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.hero-link {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+}
+.status-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding: var(--space-3) 0;
+  border-top: var(--rule-faint);
+  border-bottom: var(--rule-faint);
+}
+.status-row dt {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.status-row dd {
+  font-size: 16px;
+  color: var(--ink);
+  margin-top: 2px;
+}
+.status-row .alert dd {
+  color: var(--red);
+  font-weight: 700;
+}
+.attention {
+  margin-top: var(--space-4);
+}
+.hero-note {
+  margin-top: var(--space-4);
+  font-size: 14px;
+}
+.desk-meta {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.desk-commentary {
+  margin-top: var(--space-2);
+}
+.desk-why {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink-soft);
+}
+.desk-change summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: underline;
+  color: var(--ink);
+  line-height: 42px;
+}
+.desk-change summary::-webkit-details-marker {
+  display: none;
+}
+.desk-change[open] {
+  flex-basis: 100%;
+}
+.desk-change-body {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: var(--rule-faint);
+}
+.desk-confirm {
+  margin-top: var(--space-5);
+}
+
 /* ---------------------------------------------------------------- footer */
 
 .footer {
@@ -892,8 +989,12 @@ td.why {
   .strip {
     grid-template-columns: 1fr 1fr;
   }
-  .states {
+  .states,
+  .status-row {
     grid-template-columns: 1fr;
+  }
+  .status-row {
+    gap: var(--space-2);
   }
   .desk-story {
     gap: var(--space-3);

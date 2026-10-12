@@ -8,7 +8,7 @@ import { jobAlerts, lastFourChecks, sendAttempts, voiceChecks } from "@/lib/site
 import { dashboardData } from "@/lib/site/queries";
 import { upcomingJobs } from "@/lib/site/schedule";
 import { formatFlag, topicLabel } from "@/lib/telegram/cards";
-import { formatIssueDateShort, formatIstDateTime } from "@/lib/time";
+import { formatIssueDateShort, formatIstDateTime, istParts } from "@/lib/time";
 import {
   approveAllAction,
   confirmAction,
@@ -25,18 +25,28 @@ export const metadata: Metadata = { title: "Editor's desk · The Dispatch", robo
 type Props = { searchParams: Promise<{ msg?: string }> };
 
 const SIGNALS: Record<string, string> = { counterintuitive: "Counterintuitive", under_reported: "Under-reported", trend_link: "Trend link" };
-const STATE: Record<string, string> = { PENDING: "○ Needs a decision", KEPT: "● Kept", EDITED: "● Edited" };
 const OPEN = new Set(["DRAFTING", "IN_REVIEW", "HELD", "CONFIRMED"]);
 
-function editorial(r: ReviewState): { label: string; detail: string; alert: boolean } {
-  const s = r.issue.status;
-  const pending = r.summary.counts.PENDING;
-  if (s === "COLLECTING") return { label: "No draft yet", detail: "Articles are still being collected. Gemini drafts on Wednesday afternoon.", alert: false };
-  if (s === "DRAFTING") return { label: "Drafted, not yet on Telegram", detail: "Cards go to your Telegram on Wednesday evening.", alert: false };
-  if (s === "IN_REVIEW")
-    return { label: "Awaiting your review", detail: pending ? `${pending} ${pending === 1 ? "story needs" : "stories need"} a decision, then confirm.` : "Every story is reviewed. Confirm when ready.", alert: true };
-  if (s === "HELD") return { label: "Held", detail: "Nothing will be sent until you confirm again.", alert: true };
-  return { label: "Confirmed by you", detail: r.issue.confirmedAt ? formatIstDateTime(r.issue.confirmedAt) : "", alert: false };
+function greeting(now: Date): string {
+  const h = istParts(now).hour;
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
+
+/** One sentence and one primary action for the issue's state. */
+function nextStep(status: string, pending: number): { line: string; primary: "review" | "confirm" | "preview" } {
+  if (status === "SENT") return { line: "This issue has gone out.", primary: "preview" };
+  if (status === "CONFIRMED") return { line: "Your issue is confirmed. It goes out on Thursday morning.", primary: "preview" };
+  if (status === "HELD") return pending ? { line: "Your issue is on hold. Review the open stories, then confirm.", primary: "review" } : { line: "Your issue is on hold. Confirm it to send.", primary: "confirm" };
+  if (pending) return { line: "Your next issue is ready for review.", primary: "review" };
+  return { line: "Every story is reviewed. Confirm when you're ready.", primary: "confirm" };
+}
+
+function editorialStatus(r: ReviewState): { label: string; alert: boolean } {
+  const st = r.issue.status;
+  if (st === "IN_REVIEW") return { label: r.summary.counts.PENDING ? `Awaiting you · ${r.summary.counts.PENDING} open` : "Reviewed · not confirmed", alert: false };
+  if (st === "HELD") return { label: "Held", alert: true };
+  if (st === "DRAFTING") return { label: "Drafted", alert: false };
+  return { label: `Confirmed${r.issue.confirmedAt ? ` ${formatIstDateTime(r.issue.confirmedAt).slice(11, 16)}` : ""}`, alert: false };
 }
 
 export default async function Desk({ searchParams }: Props) {
@@ -62,7 +72,9 @@ export default async function Desk({ searchParams }: Props) {
 
   const issueId = review.issue.id;
   const status = review.issue.status;
-  const ed = editorial(review);
+  const ed = editorialStatus(review);
+  const pending = review.summary.counts.PENDING;
+  const step = nextStep(status, pending);
   const open = OPEN.has(status);
   const [delivered] = status === "SENT"
     ? await db()
@@ -82,121 +94,103 @@ export default async function Desk({ searchParams }: Props) {
   const out = review.picks.filter((p) => p.state === "SWAPPED_OUT");
   const attention = [
     ...alerts,
-    ...(status === "IN_REVIEW" && review.summary.counts.PENDING ? [`${review.summary.counts.PENDING} ${review.summary.counts.PENDING === 1 ? "story still needs" : "stories still need"} your decision.`] : []),
     ...(flagged && open && status !== "CONFIRMED" ? [`${flagged} ${flagged === 1 ? "story has" : "stories have"} a ⚠ fact flag: a number or name not found in the source. Check before confirming.`] : []),
     ...review.summary.warnings,
-    ...(status === "HELD" ? ["The issue is held. Confirm it to send."] : []),
   ];
 
+  const idInputs = <input type="hidden" name="issueId" value={issueId} />;
   return (
     <>
-      <section className="section">
-        <p className="eyebrow">Editor&rsquo;s desk · Shreya</p>
-        <h1 className="page-title">{formatIssueDateShort(review.issue.issueDate)} issue</h1>
+      <section className="section desk-hero">
+        <p className="eyebrow">Weekly edition · {formatIssueDateShort(review.issue.issueDate)}</p>
+        <h1 className="section-heading">
+          {greeting(new Date())}, Shreya.
+          <br />
+          {step.line}
+        </h1>
+        <p className="hero-summary">
+          {review.livePicks.length} stories · {Object.keys(review.summary.topics).length} topics · picked from {d.figures.fetched.toLocaleString("en-IN")} articles
+          this week
+        </p>
         {msg ? (
           <p className="notice" role="status">
             {msg}
           </p>
         ) : null}
 
-        <div className="states">
-          <div className={ed.alert ? "state alert" : "state"}>
-            <p className="ui-label">1 · Your review</p>
-            <p className="state-value">{ed.label}</p>
-            <p className="state-detail">{ed.detail}</p>
+        <div className="hero-actions">
+          {step.primary === "review" ? (
+            <a className="button button-solid" href="#stories">
+              Review the {pending} open {pending === 1 ? "story" : "stories"}
+            </a>
+          ) : step.primary === "confirm" && open ? (
+            <form action={confirmAction}>
+              {idInputs}
+              <input type="hidden" name="hash8" value={review.summary.contentHash.slice(0, 8)} />
+              <button className="button button-solid" type="submit">
+                Confirm the final issue
+              </button>
+            </form>
+          ) : (
+            <a className="button button-solid" href="/preview" target="_blank" rel="noopener">
+              Preview the email
+            </a>
+          )}
+          {open && pending > 0 && status !== "CONFIRMED" ? (
+            <form action={approveAllAction}>
+              {idInputs}
+              <button className="ghost hero-link" type="submit">
+                Keep all {pending} as drafted
+              </button>
+            </form>
+          ) : null}
+          {open && status !== "HELD" ? (
+            <form action={holdAction}>
+              {idInputs}
+              <button className="ghost hero-link" type="submit">
+                Hold the issue
+              </button>
+            </form>
+          ) : null}
+        </div>
+
+        <dl className="status-row">
+          <div className={ed.alert ? "alert" : undefined}>
+            <dt>Your review</dt>
+            <dd>{ed.label}</dd>
           </div>
-          <div className="state">
-            <p className="ui-label">2 · Scheduled delivery</p>
-            <p className="state-value">{status === "SENT" ? "Done" : "Thu 07:30–08:29 IST"}</p>
-            <p className="state-detail">
-              {status === "SENT"
-                ? "The Thursday job ran."
-                : status === "CONFIRMED"
-                  ? `Goes out at the next send run (${sendRun ? formatIstDateTime(sendRun.next) : "Thursday"}).`
-                  : "Only if you have confirmed by then; otherwise it is held and you get an alert."}
-            </p>
+          <div>
+            <dt>Scheduled delivery</dt>
+            <dd>{status === "SENT" ? "Done" : `Thu 07:30–08:29 IST${status === "CONFIRMED" && sendRun ? "" : ", if confirmed"}`}</dd>
           </div>
-          <div className={heldRun && status !== "SENT" ? "state alert" : "state"}>
-            <p className="ui-label">3 · Delivery outcome</p>
-            <p className="state-value">{status === "SENT" ? "Sent" : heldRun ? "Held by the gate" : "Not sent yet"}</p>
-            <p className="state-detail">
+          <div className={heldRun && status !== "SENT" ? "alert" : undefined}>
+            <dt>Delivery outcome</dt>
+            <dd>
               {status === "SENT" && delivered
-                ? `${delivered.sent} real ${delivered.sent === 1 ? "email" : "emails"}, ${delivered.skipped.toLocaleString("en-IN")} synthetic addresses skipped (demo mode), ${delivered.failed} failed.`
+                ? `Sent · ${delivered.sent} real, ${delivered.skipped.toLocaleString("en-IN")} demo-skipped${delivered.failed ? `, ${delivered.failed} failed` : ""}`
                 : heldRun
-                  ? `${formatIstDateTime(heldRun.at)}: not confirmed, nothing was sent.`
-                  : "Scheduled for Thursday morning. Nothing has been sent to subscribers yet."}
-            </p>
+                  ? `Held by the gate ${formatIstDateTime(heldRun.at).slice(11, 16)}`
+                  : "Not sent yet"}
+            </dd>
           </div>
-        </div>
+        </dl>
 
-        <div className="grid-2" style={{ marginTop: 32, alignItems: "start" }}>
-          <div className="stack">
-            <h2 className="card-heading">{attention.length ? "Needs your attention" : "Nothing needs you"}</h2>
-            {attention.length ? (
-              <ul className="checks">
-                {attention.map((a) => (
-                  <li key={a} className="no">
-                    <span aria-hidden="true">!</span> {a}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>{status === "SENT" ? "This issue has gone out." : "The issue is confirmed and will go out on Thursday morning."}</p>
-            )}
-            <p className="muted" style={{ fontSize: 16 }}>
-              {d.figures.fetched.toLocaleString("en-IN")} articles read · {d.figures.duplicates} duplicates dropped · {review.livePicks.length} stories picked across{" "}
-              {Object.keys(review.summary.topics).length} topics · <Link href="/status">Settings &amp; status</Link>
-            </p>
-          </div>
-
-          <div className="card">
-            {canEdit ? (
-              open ? (
-                <div className="stack">
-                  <h2 className="card-heading">Decide</h2>
-                  {review.summary.counts.PENDING > 0 && status !== "CONFIRMED" ? (
-                    <form action={approveAllAction}>
-                      <input type="hidden" name="issueId" value={issueId} />
-                      <button className="button" type="submit">
-                        Keep all remaining ({review.summary.counts.PENDING})
-                      </button>
-                    </form>
-                  ) : null}
-                  {status !== "CONFIRMED" ? (
-                    <form action={confirmAction}>
-                      <input type="hidden" name="issueId" value={issueId} />
-                      <input type="hidden" name="hash8" value={review.summary.contentHash.slice(0, 8)} />
-                      <button className="button button-solid" type="submit">
-                        Confirm the final issue
-                      </button>
-                    </form>
-                  ) : (
-                    <p>
-                      Confirmed. Any change to a story resets this and you confirm again.
-                    </p>
-                  )}
-                  {status !== "HELD" ? (
-                    <form action={holdAction}>
-                      <input type="hidden" name="issueId" value={issueId} />
-                      <button className="ghost" type="submit" style={{ textDecoration: "underline" }}>
-                        Hold the issue (send nothing)
-                      </button>
-                    </form>
-                  ) : null}
-                  <p className="muted" style={{ fontSize: 15 }}>
-                    Same issue as your Telegram cards: everything you do here updates them, and the send gate checks both. This desk is open for
-                    the demo; in demo mode the email only reaches the allowlisted inbox.
-                  </p>
-                </div>
-              ) : (
-                <p>This issue has been sent; nothing can change.</p>
-              )
-            ) : null}
-          </div>
-        </div>
+        {attention.length ? (
+          <ul className="checks attention" aria-label="Needs your attention">
+            {attention.map((x) => (
+              <li key={x} className="no">
+                <span aria-hidden="true">!</span> {x}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="muted hero-note">
+          Same issue as your Telegram cards; a change in either place updates both. Open for the demo; in demo mode the email reaches only the
+          allowlisted inbox. <Link href="/status">Settings &amp; status</Link>
+        </p>
       </section>
 
-      <section className="section">
+      <section className="section" id="stories">
         <div className="desk-head">
           <h2 className="section-heading">The stories</h2>
           <a className="red-link" href="/preview" target="_blank" rel="noopener">
@@ -206,91 +200,91 @@ export default async function Desk({ searchParams }: Props) {
         <ol className="desk-stories">
           {review.livePicks.map((p) => {
             const v = voice[p.id];
+            const problems = [...(v?.errors.length ? [`Voice check: ${v.errors.join(", ")}`] : []), ...(l4[p.id] ? [`Matches a story in the ${l4[p.id]} issue`] : [])];
             return (
               <li key={p.id} id={`s-${p.id}`} className="desk-story">
                 <span className="dropcap">{p.position}</span>
                 <div className="desk-body">
                   <p className="story-topic">
                     {topicLabel(p.topic)} · {SIGNALS[p.signalType] ?? p.signalType}
-                    <span className={`desk-state${p.state === "PENDING" ? " pending" : ""}`}>{STATE[p.state] ?? p.state}</span>
+                    {p.state === "PENDING" ? <span className="desk-state pending">needs a decision</span> : p.state === "EDITED" ? <span className="desk-state">edited</span> : null}
                   </p>
                   <h3 className="card-heading">
                     <a href={p.url} target="_blank" rel="noopener noreferrer">
                       {p.headline}
                     </a>
                   </h3>
-                  <p className="muted" style={{ fontSize: 15 }}>
+                  <p className="desk-meta">
                     {p.publisher ?? ""}
                     {p.replacedPosition ? " · swapped in from the alternatives" : ""}
                   </p>
-                  <p style={{ marginTop: 8 }}>{p.commentary}</p>
-                  <p className="eyebrow" style={{ marginTop: 8 }}>
-                    Why Gemini picked it: {p.rationale}
-                  </p>
+                  <p className="desk-commentary">{p.commentary}</p>
+                  <p className="desk-why">Why: {p.rationale}</p>
                   {p.flags.map((f) => (
                     <p key={f} className="flag">
                       ⚠ {formatFlag(f)}
                     </p>
                   ))}
-                  {v ? (
-                    <p className="ui-label" style={{ marginTop: 8 }}>
-                      {v.sentences} sentences · {v.words} words · voice check {v.errors.length ? `✗ ${v.errors.join(", ")}` : "✓"}
-                      {p.id in l4 ? (l4[p.id] ? ` · ! matches the ${l4[p.id]} issue` : " · ✓ not in the last 4 issues") : ""}
+                  {problems.map((x) => (
+                    <p key={x} className="flag">
+                      ! {x}
                     </p>
-                  ) : null}
+                  ))}
 
                   {canEdit && open ? (
                     <div className="desk-actions">
                       {p.state === "PENDING" ? (
                         <form action={keepAction}>
-                          <input type="hidden" name="issueId" value={issueId} />
+                          {idInputs}
                           <input type="hidden" name="storyId" value={p.id} />
                           <button className="button" type="submit">
                             Keep
                           </button>
                         </form>
                       ) : null}
-                      <details className="desk-edit">
-                        <summary className="button">Edit</summary>
-                        <form action={editAction} className="stack">
-                          <input type="hidden" name="issueId" value={issueId} />
-                          <input type="hidden" name="storyId" value={p.id} />
-                          <label className="eyebrow" htmlFor={`t-${p.id}`}>
-                            Your commentary (2–3 sentences, at most 65 words)
-                          </label>
-                          <textarea id={`t-${p.id}`} name="text" defaultValue={p.commentary} rows={5} required />
-                          <label style={{ fontSize: 15 }}>
-                            <input type="checkbox" name="override" /> Use anyway if the voice check fails
-                          </label>
-                          <button className="button" type="submit">
-                            Save
-                          </button>
-                        </form>
+                      <details className="desk-change">
+                        <summary>Change</summary>
+                        <div className="desk-change-body">
+                          <form action={editAction} className="stack">
+                            {idInputs}
+                            <input type="hidden" name="storyId" value={p.id} />
+                            <label className="eyebrow" htmlFor={`t-${p.id}`}>
+                              Edit the commentary (2–3 sentences, at most 65 words)
+                            </label>
+                            <textarea id={`t-${p.id}`} name="text" defaultValue={p.commentary} rows={4} required />
+                            <label style={{ fontSize: 15 }}>
+                              <input type="checkbox" name="override" /> Use anyway if the voice check fails
+                            </label>
+                            <button className="button" type="submit">
+                              Save
+                            </button>
+                          </form>
+                          {review.unusedBackups.length ? (
+                            <form action={swapAction} className="desk-swap">
+                              {idInputs}
+                              <input type="hidden" name="storyId" value={p.id} />
+                              <select name="backupId" aria-label={`Replace story ${p.position} with`}>
+                                <option value="">Best alternative (keeps 3+ topics)</option>
+                                {review.unusedBackups.map((b) => (
+                                  <option key={b.id} value={b.id}>
+                                    {topicLabel(b.topic)}: {b.headline.length > 70 ? `${b.headline.slice(0, 68)}…` : b.headline}
+                                  </option>
+                                ))}
+                              </select>
+                              <button className="button" type="submit">
+                                Replace
+                              </button>
+                            </form>
+                          ) : null}
+                          <form action={removeAction}>
+                            {idInputs}
+                            <input type="hidden" name="storyId" value={p.id} />
+                            <button className="ghost hero-link" type="submit">
+                              Remove this story
+                            </button>
+                          </form>
+                        </div>
                       </details>
-                      {review.unusedBackups.length ? (
-                        <form action={swapAction} className="desk-swap">
-                          <input type="hidden" name="issueId" value={issueId} />
-                          <input type="hidden" name="storyId" value={p.id} />
-                          <select name="backupId" aria-label={`Swap story ${p.position} for`}>
-                            <option value="">Best alternative (keeps 3+ topics)</option>
-                            {review.unusedBackups.map((b) => (
-                              <option key={b.id} value={b.id}>
-                                {topicLabel(b.topic)}: {b.headline.length > 70 ? `${b.headline.slice(0, 68)}…` : b.headline}
-                              </option>
-                            ))}
-                          </select>
-                          <button className="button" type="submit">
-                            Swap
-                          </button>
-                        </form>
-                      ) : null}
-                      <form action={removeAction}>
-                        <input type="hidden" name="issueId" value={issueId} />
-                        <input type="hidden" name="storyId" value={p.id} />
-                        <button className="ghost" type="submit" style={{ textDecoration: "underline" }}>
-                          Remove
-                        </button>
-                      </form>
                     </div>
                   ) : null}
                 </div>
@@ -298,6 +292,15 @@ export default async function Desk({ searchParams }: Props) {
             );
           })}
         </ol>
+        {open && status !== "CONFIRMED" && pending === 0 ? (
+          <form action={confirmAction} className="desk-confirm">
+            {idInputs}
+            <input type="hidden" name="hash8" value={review.summary.contentHash.slice(0, 8)} />
+            <button className="button button-solid" type="submit">
+              Confirm the final issue
+            </button>
+          </form>
+        ) : null}
       </section>
 
       {review.unusedBackups.length ? (
