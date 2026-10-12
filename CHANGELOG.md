@@ -1,5 +1,13 @@
 # Changelog
 
+## Phase 5 — State machine and send gate (2026-10-12)
+
+- `lib/approval/fsm.ts`: event table (`nextStatus`), `hashContent`, pure guards `checkConfirm` / `checkSendAllowed` (the six conditions) / `draftDeliverable`, and DB functions `transition()` (row-locked, writes the approvals audit trail), `computeContentHash`, `assertSendAllowed` (fails closed without `SHREYA_TG_USER_ID`).
+- `lib/mail/send.ts`: `sendIssue()` stub whose first line is the gate.
+- Curate's move to DRAFTING now goes through the state machine.
+- Tests: all 49 status × event pairs; each send guard; hash sensitivity; a DB walkthrough on a disposable issue (wrong user, pending story, stale card, confirm, edit-after-confirm reset, tamper caught by hash, hold, fail-closed).
+- Phase 4 follow-up: prompt rules 8 and 11 tightened (user-approved), grounding-lint false alarms fixed.
+
 ## Phase 4 — Gemini selection (2026-10-12)
 
 - `content/style-guide.md` filled (AI-generated with the user's permission; recorded in `CLAUDE.md` §4). Seeded as style guide v2.

@@ -75,6 +75,14 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 
 Deviations recorded in Phase 4: short candidate ids (`a01`…) mapped to UUIDs; strict schema to Gemini but lenient parse; retries = 3 after the first attempt (the docs say both "3 attempts" and "retry 3×" with three delays — the three delays decide it); curate refuses only below 8 candidates (docs/02 §8: still run on a thin batch); voice lint also errors on `!` (style guide: "No exclamation marks"); validator `LAST_FOUR_HIT` = the dedupe rule **or** the doc's "≥0.5 similarity + entity overlap"; invalid fixtures derived in code; `extractEntities` now also breaks name phrases at a sentence-ending period (found in live commentary; titles barely affected, all dedupe tests unchanged); grounding lint ignores a capitalised sentence-opening word before a name but still flags mid-sentence inventions ("Series C").
 
+## Phase 5 (2026-10-12)
+
+| Topic | Decision | Notes |
+|---|---|---|
+| State machine detail | Exact event table written into `02-ARCHITECTURE.md` §6 ("As implemented") | Adds what the intent table left implicit: curate may replace a draft in review or on hold; `edit` is a no-op except on a confirmed issue; Hold is allowed from DRAFTING too |
+| notify guard | Valid draft **or** `needs_attention` | docs §8 says a thin draft is created and flagged so Shreya can act; the strict guard would have stranded it |
+| Card hash | Confirm buttons carry an 8-char hash prefix (64-byte callback limit, docs/05 §3); compared with `startsWith` | |
+
 ## Open
 
 - [x] Feed list approval (Phase 2: 20 RSS + 5 GNews)

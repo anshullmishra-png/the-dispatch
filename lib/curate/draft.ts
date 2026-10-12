@@ -1,11 +1,14 @@
 import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { approvals, articles, type Issue, issues, issueStories } from "@/db/schema";
+import { canTransition, nextStatus } from "@/lib/approval/fsm";
 import { withTransaction } from "@/lib/db";
 import { formatIssueDateShort } from "@/lib/time";
 import type { SelectedStory, SelectionResult } from "./select";
 
-/** Once confirmed (or later), a draft can only change through the review flow. */
-export const LOCKED_STATUSES = ["CONFIRMED", "SENDING", "SENT"] as const;
+/** Statuses where curate may not replace the draft (derived from the state machine). */
+export const LOCKED_STATUSES = (["COLLECTING", "DRAFTING", "IN_REVIEW", "CONFIRMED", "SENDING", "SENT", "HELD"] as const).filter(
+  (s) => !canTransition(s, "curate"),
+);
 
 export class DraftExistsError extends Error {
   constructor() {
@@ -47,7 +50,7 @@ export async function persistDraft(issue: Issue, result: SelectionResult, opts: 
   return withTransaction(async (tx) => {
     const [current] = await tx.select({ status: issues.status }).from(issues).where(eq(issues.id, issue.id)).for("update");
     if (!current) throw new Error(`issue ${issue.id} not found`);
-    if ((LOCKED_STATUSES as readonly string[]).includes(current.status)) throw new DraftLockedError(current.status);
+    if (!canTransition(current.status, "curate")) throw new DraftLockedError(current.status);
 
     const [existing] = await tx.select({ n: count() }).from(issueStories).where(eq(issueStories.issueId, issue.id));
     const replaced = (existing?.n ?? 0) > 0;
@@ -71,7 +74,7 @@ export async function persistDraft(issue: Issue, result: SelectionResult, opts: 
     await tx
       .update(issues)
       .set({
-        status: "DRAFTING",
+        status: nextStatus(current.status, "curate"),
         needsAttention: result.needsAttention,
         subject: draftSubject(issue.issueDate, result.picks[0]?.headline ?? ""),
         contentHash: null,

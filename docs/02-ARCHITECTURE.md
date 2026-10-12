@@ -158,6 +158,22 @@ Statuses: `COLLECTING → DRAFTING → IN_REVIEW → CONFIRMED → SENDING → S
 
 `sendIssue()` is the only function that imports Resend, and it calls `assertSendAllowed()` as its first line. Add a unit test that tries to send with each guard failing and expects a throw.
 
+### As implemented (`lib/approval/fsm.ts`, Phase 5)
+
+The table above is the intent; this is the exact event table the code enforces (and `tests/fsm.test.ts` checks against an independent copy). Any status/event pair not listed throws `IllegalTransitionError`.
+
+| Event | Allowed from → to | Guards and effects |
+|---|---|---|
+| `curate` | COLLECTING, DRAFTING, IN_REVIEW, HELD → DRAFTING | Replaces the draft (forced re-curate). Route guard: ≥1 ok ingest. Never from CONFIRMED / SENDING / SENT |
+| `notify` | DRAFTING → IN_REVIEW | Draft valid (8–10 live picks, ≥3 topics) **or** flagged `needs_attention` (a thin draft still reaches Shreya, docs §8) |
+| `confirm` | IN_REVIEW, HELD → CONFIRMED | Caller = `SHREYA_TG_USER_ID`; no live pick `PENDING`; card hash (8-char prefix) = fresh hash. Stores `content_hash`, `confirmed_at`, `confirmed_by`; writes `approvals(confirm, hash)` |
+| `edit` | CONFIRMED → IN_REVIEW; DRAFTING, IN_REVIEW, HELD → (unchanged) | Called after any content change (edit/swap/keep). From CONFIRMED it clears the hash and confirmation and writes `approvals(reset_by_edit)` |
+| `hold` | DRAFTING, IN_REVIEW, CONFIRMED → HELD | Shreya's Hold, or the send cron finding no confirmation. Writes `approvals(hold)` |
+| `start_send` | CONFIRMED → SENDING | Preceded by `assertSendAllowed()` in `sendIssue()` |
+| `finish_send` | SENDING → SENT | Sets `sent_at` |
+
+All guards fail closed: if `SHREYA_TG_USER_ID` is unset, Confirm and the send gate refuse everything. Transitions lock the issue row (`SELECT … FOR UPDATE`) inside a transaction.
+
 ## 7. Weekly timeline
 
 | When | Job | Outcome |
