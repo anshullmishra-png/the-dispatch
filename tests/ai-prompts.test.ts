@@ -33,6 +33,13 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain(DATA_NOT_INSTRUCTIONS);
   });
 
+  it("includes the attribution, no-inflation and no-restatement rules (added after the first live draft)", () => {
+    expect(prompt).toContain("Keep every fact attached to the\n   actor the snippet attaches it to");
+    expect(prompt).toContain('"in talks"\n   is not "agreed"');
+    expect(prompt).toContain("11. Sentence 1 makes the point in Shreya's own words; it must not restate the headline.");
+    expect(prompt).toContain("Indian English spelling");
+  });
+
   it("groups the last four issues by date with topics", () => {
     expect(prompt).toMatch(/2026-10-08:\n- \[ai_saas\] AI-focused byteXL raises \$9 Mn\n- \[fintech\] PB Fintech/);
     expect(prompt).toContain("2026-10-01:\n- [consumer_d2c]");

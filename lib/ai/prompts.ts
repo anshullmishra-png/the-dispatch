@@ -53,10 +53,15 @@ HARD RULES (all mandatory)
 6. rationale: one sentence, why this story, in terms of signal and this week's batch.
 7. commentary: 2 or 3 sentences, at most 65 words total, in Shreya's voice (STYLE GUIDE).
 8. Use only facts present in the candidate's title and snippet. Do not add numbers, names,
-   dates or claims that are not there. If the snippet is thin, comment on the implication
-   without inventing detail.
+   dates, funding stages or claims that are not there. Keep every fact attached to the
+   actor the snippet attaches it to (if merchants face a problem, do not say borrowers do).
+   Never inflate quantity or certainty: "aims to gather" is not "has gathered", "in talks"
+   is not "agreed", "up to 30,000" is not "thousands are demanding". If the snippet is thin,
+   comment on the implication without inventing detail.
 9. Do not write "according to reports" filler, hashtags, or emoji unless the style guide allows.
 10. Vary sentence openings across commentaries. Do not start two commentaries the same way.
+11. Sentence 1 makes the point in Shreya's own words; it must not restate the headline.
+    Use Indian English spelling (organise, favour, programme, labour).
 
 TOPICS: {{topics}}
 
