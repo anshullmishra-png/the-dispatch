@@ -16,13 +16,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
-  const force = new URL(req.url).searchParams.get("force") === "1";
+  const params = new URL(req.url).searchParams;
+  const force = params.get("force") === "1";
+  // Wednesday's second run, just before curate: only a run in the last 3 h blocks it.
+  const preCurate = params.get("slot") === "precurate";
   const trigger = isVercelCron(req) ? "cron" : "manual";
   const now = new Date();
   const issue = await getOrCreateIssue("ingest", now);
 
   if (!force) {
-    const blocking = await hasBlockingRun("ingest", issue.id, now);
+    const blocking = await hasBlockingRun("ingest", issue.id, now, preCurate ? { sinceMs: 3 * 3600_000 } : {});
     if (blocking) {
       log.info("ingest skipped", { reason: blocking, issueDate: issue.issueDate });
       return NextResponse.json({ ok: true, skipped: true, reason: blocking, issueDate: issue.issueDate });

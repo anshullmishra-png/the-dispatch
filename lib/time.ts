@@ -123,10 +123,17 @@ export function targetIssueDate(at: Date): IsoDate {
  * Collection window for an issue: previous Thursday 00:00 IST up to and including
  * Wednesday 23:59:59.999 IST. Consecutive windows touch, so no instant is unassigned.
  */
+/**
+ * Window cutoff: Wednesday 13:30 IST, the start of the last ingest before curate
+ * (user decision 2026-10-12). Anything published after it belongs to next week's
+ * issue, so Wednesday afternoon and evening news is never lost.
+ */
+export const WINDOW_CUTOFF = { hour: 13, minute: 30 } as const;
+
 export function issueWindow(issueDate: IsoDate): { start: Date; end: Date } {
   assertThursday(issueDate);
-  const start = istToUtc(addDays(issueDate, -7));
-  const end = new Date(istToUtc(issueDate).getTime() - 1);
+  const start = istToUtc(addDays(issueDate, -8), WINDOW_CUTOFF.hour, WINDOW_CUTOFF.minute);
+  const end = new Date(istToUtc(addDays(issueDate, -1), WINDOW_CUTOFF.hour, WINDOW_CUTOFF.minute).getTime() - 1);
   return { start, end };
 }
 

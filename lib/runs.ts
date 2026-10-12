@@ -21,8 +21,14 @@ export function idempotencyScope(job: Job): "day" | "issue" {
  * True if this job already succeeded for the issue (in its scope), or a run is
  * in flight right now. Guards against Vercel's best-effort cron double-delivery.
  */
-export async function hasBlockingRun(job: Job, issueId: string, now: Date): Promise<false | "already_ok" | "in_progress"> {
-  const since = idempotencyScope(job) === "day" ? istToUtc(istDate(now)) : new Date(0);
+export async function hasBlockingRun(
+  job: Job,
+  issueId: string,
+  now: Date,
+  /** Narrower scope for a second daily slot (Wednesday's pre-curate ingest). */
+  opts: { sinceMs?: number } = {},
+): Promise<false | "already_ok" | "in_progress"> {
+  const since = opts.sinceMs !== undefined ? new Date(now.getTime() - opts.sinceMs) : idempotencyScope(job) === "day" ? istToUtc(istDate(now)) : new Date(0);
   const staleBefore = new Date(now.getTime() - STALE_RUN_MS);
   const [run] = await db()
     .select({ ok: pipelineRuns.ok, finishedAt: pipelineRuns.finishedAt })

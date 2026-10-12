@@ -97,10 +97,10 @@ describe("targetIssueDate", () => {
 });
 
 describe("issueWindow", () => {
-  it("runs from previous Thu 00:00 IST to Wed 23:59:59.999 IST", () => {
+  it("runs from the previous Wed 13:30 IST to this Wed 13:29:59.999 IST", () => {
     const { start, end } = issueWindow("2026-10-15");
-    expect(start.toISOString()).toBe("2026-10-07T18:30:00.000Z");
-    expect(end.toISOString()).toBe("2026-10-14T18:29:59.999Z");
+    expect(start.toISOString()).toBe("2026-10-07T08:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-10-14T07:59:59.999Z");
   });
 
   it("consecutive windows touch with no gap or overlap", () => {
@@ -109,10 +109,12 @@ describe("issueWindow", () => {
     expect(nextWeek.start.getTime() - thisWeek.end.getTime()).toBe(1);
   });
 
-  it("agrees with collectingIssueDate at both edges", () => {
+  it("the Wednesday ingests (08:30 and 13:30) still collect for the next day's issue", () => {
     const { start, end } = issueWindow("2026-10-15");
-    expect(collectingIssueDate(start)).toBe("2026-10-15");
     expect(collectingIssueDate(end)).toBe("2026-10-15");
+    // An article from Wed 7 Oct 15:00 IST is fetched next Monday for the 15 Oct issue.
+    expect(isInWindow(new Date("2026-10-07T09:30:00Z"), "2026-10-15")).toBe(true);
+    expect(isInWindow(new Date("2026-10-07T09:30:00Z"), "2026-10-08")).toBe(false);
     expect(isInWindow(start, "2026-10-15")).toBe(true);
     expect(isInWindow(end, "2026-10-15")).toBe(true);
     expect(isInWindow(new Date(start.getTime() - 1), "2026-10-15")).toBe(false);

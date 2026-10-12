@@ -174,7 +174,7 @@ export async function weekTimeline(issue: { id: string; issueDate: string; statu
   const send = last("send");
   const sendKind = (send?.stats as Record<string, unknown> | null)?.kind;
   return [
-    step("Ingest (RSS + GNews)", "Mon–Wed 08:30–09:29 IST", ingestDays.length ? "done" : "due", lastOk("ingest")?.startedAt ?? null, `${ingestDays.length} day(s) with a successful run`),
+    step("Ingest (RSS + GNews)", "Mon–Wed 08:30–09:29 IST, plus Wed 13:30 before curate", ingestDays.length ? "done" : "due", lastOk("ingest")?.startedAt ?? null, `${ingestDays.length} day(s) with a successful run`),
     step("Gemini editorial selection", "Wed 14:30–15:29 IST", lastOk("curate") ? "done" : last("curate") ? "failed" : "due", lastOk("curate")?.startedAt ?? null),
     step("Draft delivered on Telegram", "Wed 17:30–18:29 IST", lastOk("notify") ? "done" : "due", lastOk("notify")?.startedAt ?? null),
     step("Shreya confirms", "any time before the send", issue.confirmedAt ? "done" : "waiting", issue.confirmedAt),

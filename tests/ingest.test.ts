@@ -4,7 +4,7 @@ import { GNewsQuotaError } from "@/lib/collect/gnews";
 import type { CollectedItem } from "@/lib/collect/types";
 import { issueWindow } from "@/lib/time";
 
-const window = issueWindow("2026-10-15"); // Thu 8 Oct 00:00 IST → Wed 14 Oct 23:59:59.999 IST
+const window = issueWindow("2026-10-15"); // Wed 7 Oct 13:30 IST → Wed 14 Oct 13:29:59.999 IST
 const src = (kind: "rss" | "gnews", name: string) => ({ id: `${kind}-${name}`, kind, name, urlOrQuery: `${name}-url` });
 const item = (over: Partial<CollectedItem> = {}): CollectedItem => ({
   url: "https://inc42.com/buzz/a",

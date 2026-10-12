@@ -5,7 +5,7 @@
 import { and, asc, eq, gte, sql } from "drizzle-orm";
 import { approvals, articles, issues, issueStories, styleExamples, styleGuides } from "@/db/schema";
 import { applyTransition, canTransition, computeContentHash, type IssueStatus, type TransitionResult } from "@/lib/approval/fsm";
-import { parseNeverSay, voiceLint } from "@/lib/curate/lint";
+import { groundingLint, openingRepeats, parseNeverSay, voiceLint } from "@/lib/curate/lint";
 import { db, type Tx, withTransaction } from "@/lib/db";
 import type { CardStory, DraftSummary, StoryState } from "@/lib/telegram/cards";
 import { istDate } from "@/lib/time";
@@ -244,6 +244,31 @@ export interface Actor {
   actorTgId: number;
 }
 
+const openingWord = (t: string) => t.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^\p{L}\p{N}]/gu, "") ?? "";
+
+/**
+ * Recomputes the ⚠ flags of every live pick from its *current* commentary, so a
+ * problem Shreya fixed disappears and a new one shows (same checks as curate:
+ * grounding, voice warnings, repeated openings across the issue).
+ */
+async function refreshFlags(tx: Tx, issueId: string): Promise<void> {
+  const live = await tx
+    .select({ id: issueStories.id, commentary: issueStories.commentaryFinal, title: articles.title, snippet: articles.snippet })
+    .from(issueStories)
+    .innerJoin(articles, eq(articles.id, issueStories.articleId))
+    .where(and(eq(issueStories.issueId, issueId), eq(issueStories.role, "pick"), sql`${issueStories.state} <> 'SWAPPED_OUT'`));
+  const repeated = new Set(openingRepeats(live.map((l) => l.commentary)));
+  for (const l of live) {
+    const opening = openingWord(l.commentary);
+    const flags = [
+      ...groundingLint(l.commentary, `${l.title} ${l.snippet ?? ""}`),
+      ...voiceLint(l.commentary, []).warnings.map((w) => `voice:${w}`),
+      ...(repeated.has(opening) ? [`repeated_opening:${opening}`] : []),
+    ];
+    await tx.update(issueStories).set({ flags }).where(eq(issueStories.id, l.id));
+  }
+}
+
 export async function keepStory(issueId: string, storyId: string, { actorTgId }: Actor): Promise<{ changed: boolean }> {
   return withTransaction(async (tx) => {
     await lockReviewable(tx, issueId);
@@ -298,6 +323,7 @@ export async function editStory(
     if (similarity < 1) {
       await tx.insert(styleExamples).values({ issueId, articleTitle: story.headline, aiText: story.commentaryAi, finalText: text, similarity });
     }
+    await refreshFlags(tx, issueId);
     const t = await applyTransition(tx, issueId, "edit", { actorTgId });
     return { ...t, similarity };
   });
@@ -350,6 +376,7 @@ export async function swapStory(
       actorTgId,
       detail: { replacementId: choice.backup.id, position: old.position, spreadOk: choice.spreadOk },
     });
+    await refreshFlags(tx, issueId);
     const t = await applyTransition(tx, issueId, "edit", { actorTgId });
     return { ...t, oldId: old.id, replacementId: choice.backup.id, position: old.position ?? 0, spreadOk: choice.spreadOk };
   });
@@ -381,6 +408,7 @@ export async function removeStory(issueId: string, storyId: string, { actorTgId 
       .set({ position: sql`-${issueStories.position} - 1` })
       .where(and(eq(issueStories.issueId, issueId), eq(issueStories.role, "pick"), sql`${issueStories.position} < 0`));
     await tx.insert(approvals).values({ issueId, storyId, action: "remove", actorTgId, detail: { position } });
+    await refreshFlags(tx, issueId);
     const t = await applyTransition(tx, issueId, "edit", { actorTgId });
     return { ...t, position };
   });

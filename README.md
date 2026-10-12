@@ -16,7 +16,7 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 
 | When (IST) | Job | What happens |
 |---|---|---|
-| Mon–Wed 08:30 | ingest | 20 RSS feeds + 5 GNews queries; every article stored once (canonical-URL hash), near-duplicates and stories from the last four issues marked |
+| Mon–Wed 08:30, Wed 13:30 | ingest | 20 RSS feeds + 5 GNews queries; every article stored once (canonical-URL hash), near-duplicates and stories from the last four issues marked. Each issue covers news published Wed 13:30 → next Wed 13:30 IST, so nothing falls between weeks; Thursday–Sunday news is fetched on Monday (up to 100 items per feed) |
 | Wed 14:30 | curate | One Gemini Flash call over the week's candidates picks 8–10 stories across ≥3 topics, each with a signal tag, a rationale and 2–3 sentences in Shreya's voice. Code validates, re-prompts, repairs; a grounding lint flags unsupported numbers/names |
 | Wed 17:30 | notify | Header, one card per story (✅ Keep · ✏️ Edit · 🔄 Swap · 🗑 Remove · 🔗 Read) and a final card (Approve all · Confirm · Hold) on Telegram |
 | Wed 22:00+ | remind | One reminder, only if still unconfirmed at 10 PM: two checks (21:30–22:29, 22:30–23:29); one that runs before 10 PM sends nothing |

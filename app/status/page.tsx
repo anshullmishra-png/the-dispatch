@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Settings & status · The Dispatch" }
 
 // Status without a second hue (docs/06 §2): glyph + text, red outline for trouble.
 const SCHEDULE_TEXT: Record<string, string> = {
-  ingest: "Mon–Wed 08:30–09:29",
+  ingest: "Mon–Wed 08:30–09:29, plus Wed 13:30–14:29 just before curate",
   curate: "Wed 14:30–15:29",
   notify: "Wed 17:30–18:29",
   remind: "Wed, at or after 10 PM: checks 21:30–22:29 and 22:30–23:29; a check before 10 PM sends nothing",

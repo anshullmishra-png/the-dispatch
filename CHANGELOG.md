@@ -2,6 +2,7 @@
 
 ## Phase 10 — Hardening and submission (2026-10-12)
 
+- Issue window Wed 13:30 → Wed 13:30 IST with a pre-curate Wednesday ingest (closes the Wednesday gap); 100 items per RSS feed; ⚠ flags recomputed after every review change.
 - Editor-first web app: `/desk` (three states, attention list, stories with why/flags/voice, alternatives, preview, open editing (no sign-in, user decision) that syncs Telegram); `/dashboard` → `/status`; Swap can take a chosen backup.
 - After review against the brief: `/articles` library, dashboard draft panel, pipeline strip, delivery history, `/style-guide`; 🗑 Remove on Telegram (migration 0003); e2e covers Remove.
 - README: overview, architecture, setup, env vars, demo script, known limits, examiner Q&A. Components Map in `docs/Components-Map.xlsx`.

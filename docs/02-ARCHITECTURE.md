@@ -117,7 +117,7 @@ Hobby cron (verified 2026-10-12): up to 100 cron jobs per project, **once per da
 
 | Job | Cron (UTC) | Fires (IST) | Meaning |
 |---|---|---|---|
-| ingest | `0 3 * * 1-3` | Mon–Wed 08:30–09:29 | collect |
+| ingest | `0 3 * * 1-3` and `0 8 * * 3` (`?slot=precurate`) | Mon–Wed 08:30–09:29, plus Wed 13:30–14:29 | collect; the Wednesday second run catches the morning's news just before curate (window cutoff Wed 13:30, changed 2026-10-12) |
 | curate | `0 9 * * 3` | Wed 14:30–15:29 | "Wednesday afternoon" |
 | notify | `0 12 * * 3` | Wed 17:30–18:29 | "by Wednesday evening" |
 | remind | `0 16 * * 3` and `0 17 * * 3` | Wed 21:30–22:29 and 22:30–23:29 | the first check at or after 22:00 IST reminds (a check before 10 PM skips); the second is the fallback. Never early (changed 2026-10-12) |

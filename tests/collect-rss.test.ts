@@ -50,7 +50,7 @@ describe("parseFeed (RSS 2.0)", () => {
   });
 
   it(`caps a feed at ${MAX_ITEMS_PER_FEED} items`, async () => {
-    const many = Array.from({ length: 55 }, (_, i) => `<item><title>T${i}</title><link>https://x.in/${i}</link></item>`).join("");
+    const many = Array.from({ length: MAX_ITEMS_PER_FEED + 15 }, (_, i) => `<item><title>T${i}</title><link>https://x.in/${i}</link></item>`).join("");
     expect((await parseFeed(rss(many), "X")).items).toHaveLength(MAX_ITEMS_PER_FEED);
   });
 

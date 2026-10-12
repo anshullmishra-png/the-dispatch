@@ -135,6 +135,9 @@ describe.skipIf(!process.env.DATABASE_URL)("review actions on Neon", () => {
     expect(await story("p2")).toMatchObject({ state: "EDITED", edited: true, commentaryFinal: "Shreya's own first line. And her second." });
     const ex = await db().select().from(styleExamples).where(eq(styleExamples.issueId, issueId));
     expect(ex).toHaveLength(1);
+    // Flags are recomputed from the current text: p2 no longer opens like the others; p3 still does.
+    expect((await story("p2"))?.flags).not.toContain("repeated_opening:ai");
+    expect((await story("p3"))?.flags).toContain("repeated_opening:ai");
     // A second edit of the same story replaces the example rather than adding one.
     await editStory(issueId, ids.p2 as string, "Shreya's own first line. And a better second.", actor);
     expect(await db().select().from(styleExamples).where(eq(styleExamples.issueId, issueId))).toHaveLength(1);

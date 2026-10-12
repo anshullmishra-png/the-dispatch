@@ -3,7 +3,8 @@ import { stripHtml, truncate } from "./text";
 import type { CollectedItem } from "./types";
 
 export const FEED_TIMEOUT_MS = 8_000;
-export const MAX_ITEMS_PER_FEED = 40;
+// 100 so Monday's run still reaches last Wednesday afternoon on busy feeds (was 40).
+export const MAX_ITEMS_PER_FEED = 100;
 export const SNIPPET_MAX = 600;
 
 const parser = new Parser();
