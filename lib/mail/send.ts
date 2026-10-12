@@ -2,7 +2,7 @@
 // action is the send gate. Algorithm: docs/05-INTEGRATIONS.md §4.
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Resend } from "resend";
-import { sendLog, subscribers } from "@/db/schema";
+import { issues, sendLog, subscribers } from "@/db/schema";
 import { assertSendAllowed, transition } from "@/lib/approval/fsm";
 import { db } from "@/lib/db";
 import { env, requireEnv } from "@/lib/env";
@@ -47,6 +47,10 @@ export async function sendIssue(
   const deadline = opts.deadline ?? Date.now() + 240_000;
   const resend = new Resend(RESEND_API_KEY);
   const issue = await loadIssueEmail(issueId);
+  // The key names the confirmed content, so a retry of this batch dedupes at Resend
+  // but a re-confirmed (changed) issue never collides with an earlier send.
+  const [{ contentHash } = { contentHash: null }] = await db().select({ contentHash: issues.contentHash }).from(issues).where(eq(issues.id, issueId));
+  const keyPrefix = `${issueId}-${(contentHash ?? "nohash").slice(0, 12)}`;
   if (issue.status === "CONFIRMED") await transition(issueId, "start_send");
 
   const [{ maxBatch } = { maxBatch: 0 }] = await db()
@@ -103,7 +107,7 @@ export async function sendIssue(
           tags: [{ name: "issue", value: issue.issueDate }],
         };
       });
-      const { data, error } = await resend.batch.send(emails, { idempotencyKey: `${issueId}-b${batchNo}` });
+      const { data, error } = await resend.batch.send(emails, { idempotencyKey: `${keyPrefix}-b${batchNo}` });
       if (error || !data) {
         const message = (error?.message ?? "no data").slice(0, 500);
         opts.log.error("resend batch failed", { batchNo, recipients: real.length, error: message });

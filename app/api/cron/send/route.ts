@@ -21,8 +21,10 @@ export async function GET(req: Request) {
   }
   const issue = await getOrCreateIssue("send", new Date());
   if (issue.status === "SENT") return NextResponse.json({ ok: true, skipped: true, reason: "already_sent", issueDate: issue.issueDate });
-  const resume = new URL(req.url).searchParams.get("resume") === "1";
-  if (!resume) {
+  const params = new URL(req.url).searchParams;
+  const resume = params.get("resume") === "1";
+  // force skips only the once-per-issue check; the send gate still decides.
+  if (!resume && params.get("force") !== "1") {
     const blocking = await hasBlockingRun("send", issue.id, new Date());
     if (blocking) return NextResponse.json({ ok: true, skipped: true, reason: blocking, issueDate: issue.issueDate });
   }

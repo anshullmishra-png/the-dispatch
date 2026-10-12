@@ -17,7 +17,8 @@
     "seed": "tsx scripts/seed.ts",
     "test:db": "vitest run --config vitest.integration.config.mts",
     "e2e:telegram": "tsx scripts/e2e-telegram.ts",
-    "e2e:send": "tsx scripts/e2e-send.ts"
+    "e2e:send": "tsx scripts/e2e-send.ts",
+    "demo:week": "tsx scripts/demo-week.ts"
   },
   "engines": {
     "node": "24.x"
