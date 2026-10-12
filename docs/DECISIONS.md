@@ -40,6 +40,14 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 | Region | Neon in AWS Asia Pacific (Singapore) `ap-southeast-1`; Vercel functions pinned to `sin1` (`vercel.json` `regions`) | User is in India; app and DB must share a region because each job runs hundreds of queries. Neon has no India region. Replaces the earlier US East suggestion |
 | GitHub | https://github.com/anshullmishra-png/the-dispatch, connected to the Vercel project (pushes to `main` deploy to production) | |
 
+## Answered in Phase 1 (2026-10-12)
+
+| Topic | Decision | Notes |
+|---|---|---|
+| Seed story source | Real articles from GNews, one batch per past week (`npm run seed:issues`), cached in `db/seed/past-issues.json` | Lets the Last-4 dedupe fire on live data. Issues labelled `[SEED]` |
+| Seed commentary / voice | Neutral placeholder text, never sent to Gemini; **no** seeded `style_examples` | Few-shot comes only from Shreya's real edits; the style guide's Examples section carries the voice until then |
+| Secrets location | `.env.local` (git-ignored), converted to `KEY=VALUE` from the user's `label: value` notes; original kept as `.env.local.bak` (git-ignored) | During the check, a script accidentally printed the values into the chat transcript. Nothing was sent elsewhere. **Rotate the Neon password and the Gemini/GNews keys before submission** if the transcript could be shared |
+
 ## Open
 
 - [ ] Feed list approval (Phase 2, after `probe-sources`)
@@ -47,6 +55,8 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 - [ ] `content/style-guide.md` filled by the user (before Phase 4)
 - [ ] Confirm `DEMO_MODE` defaults to `true` when unset (see Deviations)
 - [ ] Map text: "Thu 8 AM" → "Thu 7:30–8:30 AM IST" (user edits the workbook)
+- [ ] GNews starter queries: 5 of 10 are 3+ words and likely return ~nothing on the free plan; replacements to approve after the Phase 2 probe
+- [ ] Rotate keys before submission (see "Secrets location")
 
 ## VERIFY log
 
@@ -59,6 +69,8 @@ Checked against official provider docs on 2026-10-12.
 | Current Gemini Flash model ID | Stable: `gemini-3.8-flash` (new stable), `gemini-3.6-flash`. Flash-Lite (separate variant): `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`. `gemini-2.5-*` limited to past users. Interactions API is now recommended; generateContent is legacy but fully supported | 2026-10-12 |
 | Gemini free-tier rate and daily limits | Not published in the docs, only shown per key in AI Studio. 3.8-flash is "free of charge" on the free tier. Check in Phase 4 with the new key | 2026-10-12 |
 | GNews free-tier quota, delay, params | 100 req/day (resets 00:00 UTC, then 403), ≤10 articles/request, 12 h delay, 30 days history, non-commercial only. `GET /api/v4/search` with `q, lang, country, max, from, to, sortby, apikey` | 2026-10-12 |
+| GNews query behaviour (observed) | 3+ word queries → 0–2 results; 1–2 word queries + `country=in` → 10 Indian results across a date range; `sortby=publishedAt` only covers the newest 1–2 days of a range, `relevance` spreads. Details in `05-INTEGRATIONS.md` §1 | 2026-10-12 |
+| Neon Postgres version | 18.6; `gen_random_uuid()` native, extensions installed by migration 0000 | 2026-10-12 |
 | Resend free-tier daily/monthly caps | 100/day, 3,000/month | 2026-10-12 |
 | Resend batch size and rate limit | Batch ≤100 emails per call (≤50 `to` each, no attachments); 10 req/s per team; `Idempotency-Key` supported on batch (≤256 chars, 24 h) | 2026-10-12 |
 | Resend test addresses and webhook event names | `delivered@`, `bounced@`, `complained@resend.dev` (+label OK), new `suppressed@resend.dev`; events `email.delivered`, `email.bounced`, `email.complained`, `email.delivery_delayed` (+ `email.failed`, `email.suppressed`); Svix headers `svix-id`, `svix-timestamp`, `svix-signature` over the raw body. `resend.dev` sender delivers only to the account owner | 2026-10-12 |
@@ -76,3 +88,8 @@ Checked against official provider docs on 2026-10-12.
 | 2026-10-12 | Issue window made contiguous; send cron `0 3 * * 4` → `0 2 * * 4` | User decisions above; `01-PRODUCT-SPEC.md`, `02-ARCHITECTURE.md`, `05-INTEGRATIONS.md` updated |
 | 2026-10-12 | Vitest config is `vitest.config.mts` | Vite warned that an ESM `.ts` config loaded as CommonJS breaks under its upcoming native config loader |
 | 2026-10-12 | `npm audit` shows 5 high-severity issues in **dev-only** lint tooling (`braces`); production dependencies report 0 | The fix requires breaking `--force` upgrades of the ESLint toolchain. Not shipped to production; revisit when `eslint-config-next` updates |
+| 2026-10-12 | `lib/dedupe/canonical.ts` and `normalize.ts` built in **Phase 1** instead of Phase 3 | Seeded past-issue articles store `canonical_hash`/`title_norm`; a stopgap version would leave stale hashes that silently break the Last-4 exact-hash check. Phase 3 keeps `engine.ts`, `history.ts` and the classification tests |
+| 2026-10-12 | `extractEntities`: name phrases break at punctuation (comma not between digits), mixed-case brands ("byteXL") count as names, number entities keep only currency + digits (units dropped, unit words stop-listed) | Found on real seed titles: "Elevar Equity, Kalaari Capital" became one unmatchable entity; "₹2,500 crore" vs "Rs 2,500 Cr" differed. Covered by unit tests |
+| 2026-10-12 | Seed builder rejects non-business titles and same-issue near-duplicates (2+ shared name/number words) | Raw GNews results included TV-series reviews and the same funding round from two outlets in one issue |
+| 2026-10-12 | Migrations run through `scripts/migrate.ts` (drizzle migrator over Neon's **direct** host), not `drizzle-kit migrate` | Neon recommends the non-pooled connection for schema changes; the pooled `DATABASE_URL` stays the app's connection |
+| 2026-10-12 | DB integration tests in a separate suite (`npm run test:db`) | `08-TESTING` requires unit tests to be network-free; the "trigram query works in a test" check needs the real database |

@@ -1,0 +1,37 @@
+{
+  "_note": "Candidate list from docs/05-INTEGRATIONS.md §1. UNVERIFIED until scripts/probe-sources.ts runs in Phase 2 and the user approves the final list.",
+  "rss": [
+    { "name": "Inc42", "url": "https://inc42.com/feed/" },
+    { "name": "YourStory", "url": "https://yourstory.com/feed" },
+    { "name": "Entrackr", "url": "https://entrackr.com/feed" },
+    { "name": "Economic Times Tech", "url": "https://economictimes.indiatimes.com/tech/rssfeeds/13357270.cms" },
+    { "name": "ET Startups", "url": "https://economictimes.indiatimes.com/small-biz/startups/rssfeeds/11993040.cms" },
+    { "name": "Livemint Technology", "url": "https://www.livemint.com/rss/technology" },
+    { "name": "Moneycontrol Startups", "url": "https://www.moneycontrol.com/rss/startups.xml" },
+    { "name": "Business Standard Companies", "url": "https://www.business-standard.com/rss/companies-101.rss" },
+    { "name": "Medianama", "url": "https://www.medianama.com/feed/" },
+    { "name": "TechCrunch India", "url": "https://techcrunch.com/tag/india/feed/" },
+    { "name": "Analytics India Magazine", "url": "https://analyticsindiamag.com/feed/" },
+    { "name": "The Hindu BusinessLine", "url": "https://www.thehindubusinessline.com/companies/feeder/default.rss" },
+    { "name": "Startup Talky", "url": "https://startuptalky.com/feed/" },
+    { "name": "Tech in Asia (India tag)", "url": "https://www.techinasia.com/tag/india/feed" },
+    { "name": "Rest of World", "url": "https://restofworld.org/feed/" },
+    { "name": "Techcircle", "url": "https://www.techcircle.in/rss" },
+    { "name": "VCCircle", "url": "https://www.vccircle.com/rss" },
+    { "name": "The News Minute (business)", "url": "https://www.thenewsminute.com/taxonomy/term/9/feed" },
+    { "name": "Indian Express Technology", "url": "https://indianexpress.com/section/technology/feed/" },
+    { "name": "Hindustan Times Tech", "url": "https://www.hindustantimes.com/feeds/rss/tech/rssfeed.xml" }
+  ],
+  "gnews": [
+    "Indian startup funding",
+    "India startup layoffs OR shutdown",
+    "Indian unicorn",
+    "India fintech regulation RBI",
+    "India quick commerce",
+    "India D2C brand",
+    "India AI startup",
+    "India climate tech startup",
+    "India SaaS startup",
+    "India startup IPO"
+  ]
+}

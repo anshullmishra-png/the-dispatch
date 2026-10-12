@@ -31,8 +31,8 @@ Built in `lib/ai/prompts.ts`.
 
 1. **Candidates** (max 80; see trimming rule). Each: `id`, `source`, `published` (IST date), `title`, `snippet` (≤280 chars, HTML stripped).
 2. **Last-4 headlines**: for each of the four previous issues: date, topic, headline. Purpose: avoid repeats *and* near-repeats (same story, new angle only if the angle is genuinely new).
-3. **Style guide**: full text of `content/style-guide.md`.
-4. **Few-shot examples**: up to 5 most recent rows from `style_examples` where `similarity < 0.9` (Shreya's edits teach more than unedited ones), shown as `AI wrote → Shreya changed to`. If fewer than 3 exist, pad with seeded past-issue commentary.
+3. **Style guide**: full text of the **active `style_guides` row** (seeded from `content/style-guide.md`). If `has_fill_markers` is true, curate stops and alerts instead of calling Gemini.
+4. **Few-shot examples**: up to 5 most recent rows from `style_examples` where `similarity < 0.9` (Shreya's edits teach more than unedited ones), shown as `AI wrote → Shreya changed to`. **Never pad with seeded past-issue commentary** (it is placeholder text, not her voice; decision 2026-10-12). With fewer than 3 rows, the section is shorter or omitted; the style guide's Examples section still supplies the voice.
 5. **Topic taxonomy** (fixed list below).
 
 **Trimming rule (when candidates > 80):** keep newest first, at most 6 per source, and **do not rank by popularity or number of outlets covering a story**, because under-reported stories are what Shreya wants. Dedupe clusters keep one representative (earliest published, then longest snippet).

@@ -1,0 +1,332 @@
+{
+  "_note": "Placeholder past issues built from real GNews results (titles, links, publishers only). Labelled [SEED] when seeded. Commentary is placeholder text, not Shreya's voice.",
+  "generatedAt": "2026-10-12T09:52:35.268Z",
+  "issues": [
+    {
+      "issueDate": "2026-10-08",
+      "stories": [
+        {
+          "position": 1,
+          "topic": "funding_vc",
+          "query": "funding round",
+          "title": "China AI race heats up: Why DeepSeek is doubling its mega-funding round to target $15 billion",
+          "url": "https://www.livemint.com/ai/artificial-intelligence/china-ai-race-heats-up-why-deepseek-is-doubling-its-mega-funding-round-to-target-15-billion-11791384760664.html",
+          "publisher": "Livemint",
+          "publishedAt": "2026-10-07T17:03:38Z"
+        },
+        {
+          "position": 2,
+          "topic": "funding_vc",
+          "query": "funding round",
+          "title": "AI-focused byteXL raises $9 Mn from Elevar Equity, Kalaari Capital",
+          "url": "https://www.thehindubusinessline.com/info-tech/bytexl-raises-9-m-from-elevar-equity-kalaari-capital/article71554948.ece",
+          "publisher": "The Hindu Business Line",
+          "publishedAt": "2026-10-07T09:24:57Z"
+        },
+        {
+          "position": 3,
+          "topic": "funding_vc",
+          "query": "funding round",
+          "title": "CurvetAI raises Rs 6 crore in pre-seed funding led by Merak Ventures",
+          "url": "https://economictimes.indiatimes.com/ai/ai-insights/curvetai-raises-rs-6-crore-in-pre-seed-funding-led-by-merak-ventures/articleshow/134739773.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-10-06T12:06:00Z"
+        },
+        {
+          "position": 4,
+          "topic": "fintech",
+          "query": "fintech",
+          "title": "Pine Labs, CAMS, Moneyview, other fintech stocks rally up to 11% after RBI MPC move. Here’s why",
+          "url": "https://economictimes.indiatimes.com/markets/stocks/news/pine-labs-cams-moneyview-other-fintech-stocks-rally-up-to-11-after-rbi-mpc-move-heres-why/articleshow/134759480.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-10-07T07:29:00Z"
+        },
+        {
+          "position": 5,
+          "topic": "fintech",
+          "query": "fintech",
+          "title": "PB Fintech extends losing streak to 7 sessions, stock hits 32-month low",
+          "url": "https://economictimes.indiatimes.com/markets/stocks/news/pb-fintech-loses-rs-42000-cr-in-7-sessions-hits-32-month-low/articleshow/134720310.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-10-06T00:50:00Z"
+        },
+        {
+          "position": 6,
+          "topic": "ai_saas",
+          "query": "AI startup",
+          "title": "Nvidia-backed Reflection unveils first AI model to take on Chinese open models",
+          "url": "https://indianexpress.com/shorts/technology/artificial-intelligence/nvidia-backed-reflection-unveils-first-ai-model-to-take-on-chinese-open-models-10908391/",
+          "publisher": "The Indian Express",
+          "publishedAt": "2026-10-06T03:45:17Z"
+        },
+        {
+          "position": 7,
+          "topic": "ai_saas",
+          "query": "AI startup",
+          "title": "AI startups turn to creators, storytellers as digital twins move beyond content generation",
+          "url": "https://www.devdiscourse.com/article/business/3987070-ai-startups-turn-to-creators-storytellers-as-digital-twins-move-beyond-content-generation",
+          "publisher": "Devdiscourse",
+          "publishedAt": "2026-10-05T12:58:58Z"
+        },
+        {
+          "position": 8,
+          "topic": "ai_saas",
+          "query": "AI startup",
+          "title": "Meta lets go co-founders and employees of AI startup Virtue AI, four months after the company hired them; Andy Stone admits differences over style of working",
+          "url": "https://timesofindia.indiatimes.com/technology/tech-news/meta-lets-go-co-founders-and-employees-of-ai-startup-virtue-ai-four-months-after-the-company-hired-them-andy-stone-admits-differences-over-style-of-working/articleshow/134685788.cms",
+          "publisher": "Times of India",
+          "publishedAt": "2026-10-05T04:26:00Z"
+        }
+      ]
+    },
+    {
+      "issueDate": "2026-10-01",
+      "stories": [
+        {
+          "position": 1,
+          "topic": "consumer_d2c",
+          "query": "D2C",
+          "title": "D2C consumer brands turn to bulk buys, selective price hikes amid input cost pressure",
+          "url": "https://www.financialexpress.com/business/news-d2c-consumer-brands-turn-to-bulk-buys-selective-price-hikes-amid-input-cost-pressure-4351010/",
+          "publisher": "The Financial Express",
+          "publishedAt": "2026-09-30T17:42:19Z"
+        },
+        {
+          "position": 2,
+          "topic": "consumer_d2c",
+          "query": "D2C",
+          "title": "Pankaj Polymers signs partnerships with B2C and D2C brands for digital vouchers",
+          "url": "https://scanx.trade/stock-market-news/companies/pankaj-polymers-signs-partnerships-b2c-d2c-brands-digital-vouchers/52237386",
+          "publisher": "scanx.trade",
+          "publishedAt": "2026-09-29T14:23:18Z"
+        },
+        {
+          "position": 3,
+          "topic": "consumer_d2c",
+          "query": "D2C",
+          "title": "Quick-commerce crunch forces D2C food brands to widen offline trade",
+          "url": "https://www.livemint.com/industry/retail/quick-commerce-d2c-food-brands-11790578839016.html",
+          "publisher": "Livemint",
+          "publishedAt": "2026-09-29T00:30:35Z"
+        },
+        {
+          "position": 4,
+          "topic": "commerce_logistics",
+          "query": "quick commerce",
+          "title": "FSSAI licenses suspended of four quick commerce dark stores in Hyderabad over food safety violations",
+          "url": "https://www.thehindu.com/news/cities/Hyderabad/fssai-licenses-suspended-of-four-quick-commerce-dark-stores-in-hyderabad-over-food-safety-violations/article71528918.ece",
+          "publisher": "The Hindu",
+          "publishedAt": "2026-09-30T15:55:38Z"
+        },
+        {
+          "position": 5,
+          "topic": "commerce_logistics",
+          "query": "quick commerce",
+          "title": "FDA officials extorting lakhs from eateries, quick-commerce firms, alleges Raut; seeks probe",
+          "url": "https://www.thehindu.com/news/national/fda-officials-extorting-lakhs-from-eateries-quick-commerce-firms-alleges-raut-seeks-probe/article71522642.ece",
+          "publisher": "The Hindu",
+          "publishedAt": "2026-09-29T06:08:41Z"
+        },
+        {
+          "position": 6,
+          "topic": "commerce_logistics",
+          "query": "quick commerce",
+          "title": "Quick-commerce sector shows signs of pricing discipline as discounting moderates: Jefferies",
+          "url": "https://economictimes.indiatimes.com/industry/services/retail/quick-commerce-sector-shows-signs-of-pricing-discipline-as-discounting-moderates-jefferies/articleshow/134479001.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-09-25T07:45:00Z"
+        },
+        {
+          "position": 7,
+          "topic": "policy_regulation",
+          "query": "startup policy",
+          "title": "Policy push, patient capital propel India's space-tech startups",
+          "url": "https://www.business-standard.com/companies/start-ups/india-space-tech-startups-funding-skyroot-inspace-rdi-fund-private-sector-126093001143_1.html",
+          "publisher": "Business Standard",
+          "publishedAt": "2026-09-30T13:22:23Z"
+        },
+        {
+          "position": 8,
+          "topic": "policy_regulation",
+          "query": "startup policy",
+          "title": "Brahma AI Appoints Shweta Rajpal Kohli as Senior Policy Advisor",
+          "url": "https://www.tribuneindia.com/news/business/brahma-ai-appoints-shweta-rajpal-kohli-as-senior-policy-advisor/",
+          "publisher": "The Tribune",
+          "publishedAt": "2026-09-29T09:07:26Z"
+        },
+        {
+          "position": 9,
+          "topic": "policy_regulation",
+          "query": "startup policy",
+          "title": "UPI MDR explained: 6 myths about the new framework and what it means for consumers and merchants",
+          "url": "https://www.businesstoday.in/india/story/upi-mdr-explained-6-myths-about-the-new-framework-and-what-it-means-for-consumers-and-merchants-557863-2026-09-25",
+          "publisher": "Business Today",
+          "publishedAt": "2026-09-25T09:47:31Z"
+        }
+      ]
+    },
+    {
+      "issueDate": "2026-09-24",
+      "stories": [
+        {
+          "position": 1,
+          "topic": "climate_deeptech",
+          "query": "EV startup",
+          "title": "Ultraviolette raises $85 million funding led by deep tech fund Yali Capital, TDK Ventures",
+          "url": "https://www.businesstoday.in/auto/story/ultraviolette-raises-85-million-funding-led-by-deep-tech-fund-yali-capital-tdk-ventures-557259-2026-09-23",
+          "publisher": "Business Today",
+          "publishedAt": "2026-09-23T08:23:55Z"
+        },
+        {
+          "position": 2,
+          "topic": "climate_deeptech",
+          "query": "climate tech",
+          "title": "Centre flags new fiscal strains for states from ageing, AI, climate risks",
+          "url": "https://www.financialexpress.com/policy/economy-centre-flags-new-fiscal-strains-for-states-from-ageing-ai-climate-risks-4344915/",
+          "publisher": "The Financial Express",
+          "publishedAt": "2026-09-22T14:46:13Z"
+        },
+        {
+          "position": 3,
+          "topic": "climate_deeptech",
+          "query": "climate tech",
+          "title": "EV Battery Tech 101: Why VinFast's LFP Batteries Are Well",
+          "url": "https://www.tribuneindia.com/news/business/ev-battery-tech-101-why-vinfasts-lfp-batteries-are-well-suited-to-indias-heat-2-2/",
+          "publisher": "The Tribune",
+          "publishedAt": "2026-09-22T09:52:57Z"
+        },
+        {
+          "position": 4,
+          "topic": "health_bio",
+          "query": "healthcare",
+          "title": "Virohan Expands Access to Healthcare Education with ₹2 Crore Merit Scholarship",
+          "url": "https://www.tribuneindia.com/news/business/virohan-expands-access-to-healthcare-education-with-%e2%82%b92-crore-merit-scholarship/",
+          "publisher": "The Tribune",
+          "publishedAt": "2026-09-22T10:47:25Z"
+        },
+        {
+          "position": 5,
+          "topic": "health_bio",
+          "query": "healthcare",
+          "title": "MF Tracker: HDFC Pharma & Healthcare Fund tops equity MFs at 25% in 1 year. Should investors chase the rally?",
+          "url": "https://economictimes.indiatimes.com/mf/analysis/mf-tracker-hdfc-pharma-healthcare-fund-tops-equity-mfs-at-25-in-1-year-should-investors-chase-the-rally/articleshow/134402281.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-09-22T04:30:00Z"
+        },
+        {
+          "position": 6,
+          "topic": "health_bio",
+          "query": "healthcare",
+          "title": "NPS Swasthya final rules: 25% healthcare withdrawal cap, mandatory insurance cover up to ₹30 lakh; check details",
+          "url": "https://www.livemint.com/money/personal-finance/nps-swasthya-final-rules-25-healthcare-withdrawal-cap-mandatory-insurance-cover-up-to-30-lakh-check-details-11789873072714.html",
+          "publisher": "Livemint",
+          "publishedAt": "2026-09-20T03:06:58Z"
+        },
+        {
+          "position": 7,
+          "topic": "exits_markets",
+          "query": "IPO",
+          "title": "NSE IPO allotment today; GMP at 4% - check status on BSE, NSE and registrar",
+          "url": "https://www.moneycontrol.com/news/business/ipo/nse-ipo-allotment-status-today-latest-gmp-declines-check-on-bse-nse-registrar-should-you-buy-sell-hold-national-stock-exchange-of-india-14035050.html",
+          "publisher": "Moneycontrol",
+          "publishedAt": "2026-09-22T04:07:58Z"
+        },
+        {
+          "position": 8,
+          "topic": "exits_markets",
+          "query": "acquisition startup",
+          "title": "In 2014, Nas invested in smart-doorbell startup Ring; 4 years later, Amazon bought the company for $1.1 billion and the American rapper pocketed at least $25 million",
+          "url": "https://economictimes.indiatimes.com/news/international/us/science-news-in-2014-nas-invested-in-smart-doorbell-startup-ring-4-years-later-amazon-bought-the-company-for-1-1-billion-and-the-american-rapper-pocketed-at-least-25-million/articleshow/134409396.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-09-22T10:27:00Z"
+        }
+      ]
+    },
+    {
+      "issueDate": "2026-09-17",
+      "stories": [
+        {
+          "position": 1,
+          "topic": "funding_vc",
+          "query": "seed round",
+          "title": "Hyderabad-based PC game publisher 1312 Interactive raises $1 million in seed funding round led by T-Accelerate Capital, Chimera Venture Capital",
+          "url": "https://timesofindia.indiatimes.com/city/hyderabad/hyderabad-based-pc-game-publisher-1312-interactive-raises-1-million-in-seed-funding-round-led-by-t-accelerate-capital-chimera-venture-capital/articleshow/134291609.cms",
+          "publisher": "Times of India",
+          "publishedAt": "2026-09-16T15:48:00Z"
+        },
+        {
+          "position": 2,
+          "topic": "funding_vc",
+          "query": "seed round",
+          "title": "TRUE ARTIS raises Rs 11.4 crore to expand network of premium aesthetic surgery centres",
+          "url": "https://economictimes.indiatimes.com/small-biz/security-tech/technology/true-artis-raises-rs-11-4-crore-to-expand-network-of-premium-aesthetic-surgery-centres/articleshow/134282744.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-09-16T08:39:00Z"
+        },
+        {
+          "position": 3,
+          "topic": "funding_vc",
+          "query": "seed round",
+          "title": "Unacademy, Astrotalk, Noise founders back Triptii Dimri-led startup Peep Beauty in ₹12 crore pre-seed funding round",
+          "url": "https://www.livemint.com/companies/news/unacademy-astrotalk-noise-founders-back-triptii-dimri-led-startup-peep-beauty-in-rs-12-crore-pre-seed-funding-round-11789313283932.html",
+          "publisher": "Livemint",
+          "publishedAt": "2026-09-13T16:20:35Z"
+        },
+        {
+          "position": 4,
+          "topic": "ai_saas",
+          "query": "SaaS",
+          "title": "Persistent vs LTM: CLSA picks top IT stock as AI coding pressure rises",
+          "url": "https://www.financialexpress.com/market/persistent-vs-ltm-clsa-picks-top-it-stock-as-ai-coding-pressure-rises-4340410/",
+          "publisher": "The Financial Express",
+          "publishedAt": "2026-09-16T11:14:53Z"
+        },
+        {
+          "position": 5,
+          "topic": "ai_saas",
+          "query": "SaaS",
+          "title": "Last week he said AI will kill humans, this week Anthropic CEO is selling SaaS tools to Salesforce",
+          "url": "https://www.indiatoday.in/technology/news/story/last-week-he-said-ai-would-end-humanity-this-week-anthropic-ceo-is-selling-saas-solutions-to-salesforce-2995632-2026-09-16",
+          "publisher": "India Today",
+          "publishedAt": "2026-09-16T05:19:45Z"
+        },
+        {
+          "position": 6,
+          "topic": "ai_saas",
+          "query": "enterprise software",
+          "title": "From Traditional QA to AI-Led Quality Engineering: The Yogiti Story",
+          "url": "https://www.aninews.in/news/business/from-traditional-qa-to-ai-led-quality-engineering-the-yogiti-story20260914171823/",
+          "publisher": "ANI (Asian News International)",
+          "publishedAt": "2026-09-14T11:48:23Z"
+        },
+        {
+          "position": 7,
+          "topic": "fintech",
+          "query": "UPI",
+          "title": "Will MDR strengthen the UPI ecosystem?",
+          "url": "https://www.businesstoday.in/magazine/deep-dive/story/will-mdr-strengthen-the-upi-ecosystem-555896-2026-09-16",
+          "publisher": "Business Today",
+          "publishedAt": "2026-09-16T10:21:18Z"
+        },
+        {
+          "position": 8,
+          "topic": "fintech",
+          "query": "UPI",
+          "title": "UPI fee: Why govt is putting a price on big merchant payments",
+          "url": "https://economictimes.indiatimes.com/tech/technology/upi-fee-why-govt-is-putting-a-price-on-big-merchant-payments/articleshow/134281724.cms",
+          "publisher": "The Economic Times",
+          "publishedAt": "2026-09-16T07:52:55Z"
+        },
+        {
+          "position": 9,
+          "topic": "fintech",
+          "query": "UPI",
+          "title": "New UPI charges from October 15: What it means for you",
+          "url": "https://www.indiatoday.in/business/story/upi-charges-from-october-15-merchant-payments-above-rs-2000-to-attract-0-4-percent-mdr-2995348-2026-09-15",
+          "publisher": "India Today",
+          "publishedAt": "2026-09-15T15:23:41Z"
+        }
+      ]
+    }
+  ]
+}

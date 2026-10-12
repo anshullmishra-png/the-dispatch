@@ -188,7 +188,21 @@ create table style_examples (                    -- few-shot memory from Shreya'
   similarity real not null,                      -- 1.0 = unedited
   created_at timestamptz not null default now()
 );
+
+-- Added 2026-10-12 (user decision: style guide stored in Neon, per the Components Map).
+create table style_guides (                      -- versioned copy of content/style-guide.md
+  id uuid primary key default gen_random_uuid(),
+  version int not null unique,
+  content text not null,
+  content_hash text not null unique,             -- sha256(content); re-seeding an unchanged file is a no-op
+  has_fill_markers boolean not null,             -- curate refuses to run while true
+  active boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create unique index style_guides_one_active_uq on style_guides (active) where active;
 ```
+
+Migrations: `db/migrations/0000_extensions.sql` (custom: the three extensions) runs before `0001_init.sql` (generated from `db/schema.ts`). `npm run db:migrate` applies them over Neon's direct (non-pooled) host.
 
 ## Rules
 
@@ -203,12 +217,12 @@ create table style_examples (                    -- few-shot memory from Shreya'
 
 `npm run seed` must be re-runnable (`ON CONFLICT DO NOTHING`) and create:
 
-1. **Sources**: from `content/sources.seed.json` after the user approves the list (≥20 incl. GNews queries).
-2. **Four past issues**, status `SENT`, dated the previous four Thursdays, each with 8–10 stories (headline, URL, topic, commentary). Source: real issues if the user has them, otherwise realistic placeholders clearly marked `seed: true` in `issues.subject` ("[SEED] The Dispatch — …"). They must cover varied topics so the Last-4 filter has something to bite on.
+1. **Sources**: from `content/sources.seed.json` (20 RSS + 10 GNews queries). Candidates until the Phase 2 probe; the user approves the final list then.
+2. **Four past issues**, status `SENT`, dated the previous four Thursdays, each with 8–10 stories (headline, URL, topic, commentary). User decision 2026-10-12: stories are **real articles** fetched from GNews for each past week by `npm run seed:issues` (`scripts/build-seed-issues.ts`, ~12–18 requests), cached in `db/seed/past-issues.json` (titles, links, publishers only). Subjects start with `[SEED]`. Commentary is the fixed placeholder `[SEED] Placeholder commentary…`, never Shreya's voice. Topics rotate so all nine appear across the four issues, so the Last-4 filter has something to bite on.
 3. **Subscribers**: 2,200 rows.
    - 1 real: the user's own email, `active`, from `SEND_ALLOWLIST`.
    - If approved: 3 Resend test addresses (`delivered@`, `bounced@`, `complained@resend.dev`), `active`, `is_test=true`.
    - 1 `unsubscribed` and 1 `bounced` example to show the statuses.
    - The rest synthetic `user0001@example.invalid` style, `active`, `is_test=true`, never really emailed (demo mode logs `skipped_demo`).
-4. **Style guide**: `content/style-guide.md` filled (see `docs/09-STYLE-GUIDE-TEMPLATE.md`).
-5. **Style examples**: 3–5 rows in `style_examples` drawn from the seeded past issues, so few-shot works on day one.
+4. **Style guide**: `content/style-guide.md` (written by the user, see `docs/09-STYLE-GUIDE-TEMPLATE.md`) is copied into `style_guides` as a new active version whenever its content changes.
+5. **Style examples**: **none seeded** (user decision 2026-10-12). Seed commentary is placeholder text and must never teach Gemini a voice. On day one the style guide's own Examples section (sent in full on every run) carries the voice; `style_examples` fills from Shreya's real edits.

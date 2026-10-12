@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# raw GNews responses used to build the seed (quota cache, not committed)
+/db/seed/.cache/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

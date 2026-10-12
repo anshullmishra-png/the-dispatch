@@ -18,7 +18,7 @@ Built phase by phase per [`docs/07-BUILD-PLAN.md`](docs/07-BUILD-PLAN.md). Live:
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Foundations, decisions, deploy | Done |
-| 1 | Database and seed | — |
+| 1 | Database and seed | Done |
 | 2 | Ingest | — |
 | 3 | Dedupe | — |
 | 4 | Gemini selection | — |
@@ -40,6 +40,8 @@ Requires Node 24.
 ```bash
 npm install
 cp .env.example .env.local   # fill in values; see the comments in the file
+npm run db:migrate           # create tables in Neon
+npm run seed                 # sources, style guide, 4 [SEED] past issues, 2,200 subscribers
 npm run dev
 ```
 
@@ -51,6 +53,11 @@ npm run dev
 | `npm run lint` | ESLint |
 | `npm test` | Vitest unit tests (no network) |
 | `npm run check` | typecheck + lint + test (run after every phase) |
+| `npm run db:generate` | Generate a migration from `db/schema.ts` |
+| `npm run db:migrate` | Apply migrations (Neon direct connection) |
+| `npm run seed:issues` | Rebuild `db/seed/past-issues.json` from GNews (`-- --force`; spends ~15 requests) |
+| `npm run seed` | Re-runnable seed; prints the resulting counts |
+| `npm run test:db` | Integration tests against the real database |
 
 ## Environment variables
 

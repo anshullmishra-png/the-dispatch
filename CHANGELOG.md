@@ -1,5 +1,16 @@
 # Changelog
 
+## Phase 1 — Database and seed (2026-10-12)
+
+- Drizzle schema (`db/schema.ts`) for all 12 tables in `docs/03-DATA-MODEL.md` plus `style_guides` (user decision: style guide in Neon). Migrations `0000_extensions` (pg_trgm, citext, pgcrypto) and `0001_init`, applied over Neon's direct host by `npm run db:migrate`.
+- `lib/db.ts`: Neon HTTP driver for simple queries, short-lived WebSocket pool for transactions, `pingDb`.
+- `lib/dedupe/canonical.ts` and `normalize.ts` (moved forward from Phase 3) with unit tests.
+- `npm run seed:issues`: four past issues from real GNews articles (36 fetched, 34 kept), cached in `db/seed/past-issues.json`.
+- `npm run seed`: 30 sources, style guide v1, 4 `[SEED]` SENT issues (8–9 stories, 3 topics each), 2,200 subscribers. Re-runnable.
+- `npm run test:db`: integration tests against Neon (extensions, counts, citext, trigram similarity).
+- `/api/health` now pings the DB, reports last run per job and the function region; returns 503 if the DB is unreachable.
+- Dependencies added: `drizzle-orm`, `@neondatabase/serverless`, `drizzle-kit`, `tsx` (all listed in `docs/02-ARCHITECTURE.md` §2).
+
 ## Phase 0 — Foundations (2026-10-12)
 
 - Scaffolded Next.js 16.4.0 (App Router, TypeScript strict, ESLint) without Tailwind or AGENTS.md.
