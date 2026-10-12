@@ -90,6 +90,17 @@ describe("groundingLint", () => {
     expect(groundingLint("Passing UPI costs on hurts buyers. Merchants raise prices.", src)).toEqual([]);
   });
 
+  // False alarms from the second live draft (2026-10-12).
+  it("does not treat digits inside codes like D2C or Q2 as amounts", () => {
+    const src = "DailyObjects raises Rs 332 crore; Roots Ventures realised an 18x return";
+    expect(groundingLint("D2C scale needs stores. Q2 matters, and 18x is rare.", src)).toEqual([]);
+  });
+
+  it("matches names across straight and curly possessives", () => {
+    const src = "Deepinder Goyal’s Temple is an unusual wearable.";
+    expect(groundingLint("Smartwatches sit on the wrist. Deepinder Goyal's Temple does not.", src)).toEqual([]);
+  });
+
   it("still flags an invented mid-sentence detail", () => {
     const src = "DailyObjects raises Rs 332 crore funding at Rs 1,050 crore valuation";
     expect(groundingLint("DailyObjects closed a ₹332 crore Series C round. It will open stores.", src)).toContain("ungrounded_entity:series c");

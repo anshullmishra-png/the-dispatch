@@ -78,10 +78,16 @@ const normalizeForNumbers = (s: string) =>
     .replace(/(?<=\d),(?=\d)/g, "")
     .toLowerCase();
 
-/** Numbers as they appear, e.g. "₹2500", "48%", "$9", "2.5". */
+/**
+ * Numbers as they appear, e.g. "₹2500", "48%", "$9", "2.5", "18x". Digits glued
+ * to letters (D2C, Q2, FY26, B2B) are names or codes, not amounts.
+ */
 function numberTokens(text: string): string[] {
-  return normalizeForNumbers(text).match(/[₹$€£]?\d+(?:\.\d+)?%?/g) ?? [];
+  return normalizeForNumbers(text).match(/(?<![\p{L}\p{N}.])[₹$€£]?\d+(?:\.\d+)?(?:%|x(?![\p{L}]))?(?![\p{L}\p{N}])/gu) ?? [];
 }
+
+/** Possessives must not break a name match ("Goyal's Temple" vs "Goyal’s Temple"). */
+const dropPossessives = (s: string) => s.replace(/['’]s\b/giu, "");
 
 /**
  * Flags numbers and multi-word names in the commentary that the source title
@@ -93,11 +99,11 @@ export function groundingLint(commentary: string, sourceText: string): string[] 
   const sourceDigits = new Set((source.match(/\d+(?:\.\d+)?/g) ?? []).map(String));
 
   for (const token of new Set(numberTokens(commentary))) {
-    const digits = token.replace(/[₹$€£%]/g, "");
+    const digits = token.replace(/[₹$€£%x]/g, "");
     if (!sourceDigits.has(digits)) flags.push(`ungrounded_number:${token}`);
   }
 
-  const sourceWords = source.replace(/[^\p{L}\p{N}\s]/gu, " ");
+  const sourceWords = dropPossessives(source).replace(/[^\p{L}\p{N}\s]/gu, " ");
   const inSource = (words: string[]) => {
     const pattern = words.map(escapeRe).join("\\s+");
     const plain = words.join(" ").replace(/[^\p{L}\p{N}\s]/gu, " ").trim().replace(/\s+/g, "\\s+");
