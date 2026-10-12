@@ -180,7 +180,7 @@ export async function weekTimeline(issue: { id: string; issueDate: string; statu
     step("Shreya confirms", "any time before the send", issue.confirmedAt ? "done" : "waiting", issue.confirmedAt),
     step(
       "Reminder if not confirmed",
-      "Wed, first check at or after 10 PM IST (checks at 21:30–22:29 and 22:30–23:29; never before 10 PM)",
+      "Wed: never before 10 PM, at the latest 11:29 PM IST (two checks; one that runs before 10 PM sends nothing)",
       reminder?.ok ? "done" : issue.confirmedAt ? "skipped" : "due",
       reminder?.startedAt ?? null,
       remindNote,
