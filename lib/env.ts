@@ -37,6 +37,8 @@ export const EnvSchema = z.object({
         .map((x) => x.trim())
         .filter(Boolean),
     ),
+  // LOW halved latency and avoided overload errors in live tests (2026-10-12).
+  GEMINI_THINKING_LEVEL: z.enum(["MINIMAL", "LOW", "MEDIUM", "HIGH"]).default("LOW"),
   GEMINI_MOCK: bool(false),
 
   NEWS_API_KEY: z.string().min(1).optional(),

@@ -154,6 +154,7 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
             responseMimeType: "application/json",
             responseJsonSchema: opts.jsonSchema,
             temperature: opts.temperature ?? 0.4,
+            thinkingConfig: { thinkingLevel: e.GEMINI_THINKING_LEVEL },
             ...(opts.maxOutputTokens ? { maxOutputTokens: opts.maxOutputTokens } : {}),
             abortSignal: AbortSignal.timeout(Math.min(CALL_TIMEOUT_MS, remaining)),
           },

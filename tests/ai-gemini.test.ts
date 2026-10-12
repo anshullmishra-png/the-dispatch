@@ -54,6 +54,26 @@ describe("generateJson", () => {
     expect(res.promptHash).toMatch(/^[0-9a-f]{16}$/);
   });
 
+  it("requests JSON with the schema and the configured thinking level", async () => {
+    let config: Record<string, unknown> = {};
+    const client: GeminiClient = {
+      models: {
+        generateContent: async (req) => {
+          config = req.config;
+          return ok('{"ok":true}');
+        },
+      },
+    };
+    await call(client);
+    expect(config).toMatchObject({
+      systemInstruction: "sys",
+      responseMimeType: "application/json",
+      responseJsonSchema: { type: "object" },
+      thinkingConfig: { thinkingLevel: "LOW" },
+    });
+    expect(config.abortSignal).toBeInstanceOf(AbortSignal);
+  });
+
   it("retries on 429 then succeeds", async () => {
     const sleeps: number[] = [];
     const client = fakeClient(fail(429), () => ok('{"ok":true}'));
