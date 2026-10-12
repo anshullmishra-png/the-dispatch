@@ -126,7 +126,8 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 
 - **Cron precision:** Hobby fires each job once a day, anywhere within its hour, best effort (a run can be missed or doubled; jobs are idempotent).
 - **Free tiers:** GNews 100 requests/day with a 12 h delay; Resend 100 emails/day, 3,000/month; Gemini free-tier limits are per key and overloads (503) come in waves, handled by retry and a fallback Flash model.
-- **Resend sender:** `onboarding@resend.dev` delivers only to the account owner, so the 2,200 subscribers are synthetic (`@example.invalid`) plus Resend test inboxes. A verified domain would lift this; web sign-ups have no double opt-in for the same reason.
+- **Resend sender:** `onboarding@resend.dev` delivers only to the account owner, so the 2,200 subscribers are synthetic (`@example.invalid`) plus Resend test inboxes. A verified domain would lift this.
+- **Spam folder:** with Resend's shared test sender, Gmail may file the issue under Spam (seen on 2026-10-12). Marking it "Not spam" fixes it for that inbox; a verified domain with SPF/DKIM fixes it for everyone.
 - **Shreya's voice** in `content/style-guide.md` was AI-generated with the user's permission (CLAUDE.md §4); her real edits become few-shot examples over time.
 - **Seed issues** (4 past issues) use real headlines with placeholder commentary; they exist to exercise the Last-4 check.
 - **Grounding lint** is a heuristic: it can miss a paraphrased invention and occasionally flags a correct one.
