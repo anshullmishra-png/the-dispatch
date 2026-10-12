@@ -77,7 +77,7 @@ All in [`.env.example`](.env.example). `GET /api/health` shows which integration
 
 `DEMO_MODE` defaults to **true**: only `SEND_ALLOWLIST` and Resend's test inboxes get real mail; every other subscriber is logged `skipped_demo`, so the 2,200-row batch logic still runs in full.
 
-## Demo script (5 minutes)
+## How to try it (5 minutes)
 
 1. **Desk.** Open the URL: this week's issue, her three states (review · scheduled delivery · outcome), what needs attention, the picks with Gemini's reasons. Then Articles (filter "Duplicates", try "Check a headline") and Settings & status (send gate, audit trail, runs).
 2. **Week on demand.** `npm run demo:week -- --reset` — ingest ×3 (second and third add 0 new: R2), curate (8–10 picks, ≥3 topics, signal tags, flags: R4–R8).
@@ -107,7 +107,7 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 | R17 Gemini Flash only | `lib/ai/gemini.ts` | no other AI SDK in `package.json` |
 | R18 Vercel public URL · R19 live data · R20 deliverables | this README | URL, repo, Components Map |
 
-## Examiner Q&A
+## Design decisions (FAQ)
 
 | Question | Answer |
 |---|---|
