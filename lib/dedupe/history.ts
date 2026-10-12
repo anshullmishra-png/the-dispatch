@@ -9,6 +9,7 @@ import { similarityOfSets, trigrams } from "./trigram";
 export interface LastFourEntry {
   issueId: string;
   issueDate: IsoDate;
+  topic: string;
   headline: string;
   title: string;
   canonicalHash: string;
@@ -21,6 +22,7 @@ export interface LastFourEntry {
 export function buildLastFourEntry(row: {
   issueId: string;
   issueDate: IsoDate;
+  topic: string;
   headline: string;
   title: string;
   canonicalHash: string;
@@ -46,15 +48,17 @@ export async function loadLastFourSet(beforeIssueDate: IsoDate): Promise<LastFou
       where status = 'SENT' and issue_date < ${beforeIssueDate}
       order by issue_date desc limit 4
     )
-    select lf.id as issue_id, lf.issue_date::text as issue_date, s.headline, a.title, a.canonical_hash
+    select lf.id as issue_id, lf.issue_date::text as issue_date, s.topic, s.position, s.headline, a.title, a.canonical_hash
     from last_four lf
     join issue_stories s on s.issue_id = lf.id
     join articles a on a.id = s.article_id
-    where s.role = 'pick' and s.state <> 'SWAPPED_OUT'`);
+    where s.role = 'pick' and s.state <> 'SWAPPED_OUT'
+    order by lf.issue_date desc, s.position`);
   return rows.map((r) =>
     buildLastFourEntry({
       issueId: String(r.issue_id),
       issueDate: String(r.issue_date),
+      topic: String(r.topic),
       headline: String(r.headline),
       title: String(r.title),
       canonicalHash: String(r.canonical_hash),

@@ -17,13 +17,14 @@ generateJson<T>(opts: {
 
 Rules:
 
-- SDK: `@google/genai`. Model from `process.env.GEMINI_MODEL`. **Do not hardcode.** Verified 2026-10-12: user chose `gemini-3.8-flash` (current stable Flash; Google lists Flash-Lite as a separate variant). Free-tier RPM/RPD are not published in the docs, only in AI Studio: check them for the user's key in Phase 4 and record them in `docs/DECISIONS.md`.
-- API surface: `models.generateContent`. Google now calls it "legacy" but "fully supported" and recommends the Interactions API for new projects. We keep generateContent because this doc's design (JSON schema output, retries) is written around it. Structured-output field names differ across Google's doc pages (`responseMimeType` + `responseSchema` / `responseJsonSchema`), so in Phase 4 confirm them against the installed SDK's types before writing the wrapper.
-- Request `responseMimeType: "application/json"` with a JSON schema; still parse with zod (never trust the model).
-- Retry on 429/500/503/timeout: 3 attempts, delays 2 s, 6 s, 15 s plus jitter. Timeout per call 50 s.
+- SDK: `@google/genai` (2.28). Model from `process.env.GEMINI_MODEL`. **Do not hardcode.** Model: **`gemini-3.6-flash`** (stable Flash). The user first chose `gemini-3.8-flash`, but on 2026-10-12 it failed 4/4 attempts on the new key (two 50 s timeouts, two 503 "high demand") while 3.6 answered first try in 6 s; the user switched. Free-tier RPM/RPD are not published in the docs (only in AI Studio).
+- API surface: `models.generateContent`. Google now calls it "legacy" but "fully supported" and recommends the Interactions API for new projects. We keep generateContent because this doc's design (JSON schema output, retries) is written around it. Confirmed against SDK 2.28 types: `config.responseMimeType` + `config.responseJsonSchema` (plain JSON Schema, generated with zod 4's `z.toJSONSchema`), `config.abortSignal`, `ApiError.status`.
+- Request `responseMimeType: "application/json"` with a JSON schema; still parse with zod (never trust the model). The schema sent to Gemini is strict (counts, enums, lengths) and lists this call's candidate ids as the only allowed `article_id` values; the parse schema is lenient so a bad answer yields precise validator violations for the re-prompt.
+- Candidate ids sent to Gemini are short (`a01`…`a80`), mapped back to article UUIDs in code (fewer tokens, no copy errors in 36-char UUIDs).
+- Retry on 429/500/502/503/504/timeout: **3 retries** after the first attempt (4 attempts), delays 2 s, 6 s, 15 s plus 0–1 s jitter. Timeout per call 50 s. A caller deadline stops retries early (curate passes 260 s so the route finishes inside Vercel's 300 s). Invalid JSON / shape mismatches are not retried here; the selection loop re-prompts instead.
 - Concurrency 1. No parallel Gemini calls (free-tier rate limits).
 - Log `label`, attempts, token usage, latency. Never log the API key or full prompts in production logs (store prompt hash).
-- `GEMINI_MOCK=true`: return `tests/fixtures/selection.json` (valid) so tests and local dev work offline. Also provide `tests/fixtures/selection-invalid-*.json` for validator tests.
+- `GEMINI_MOCK=true`: return `tests/fixtures/selection.json` (valid; ids `a01`–`a13`, which map onto the first 13 candidates of the call) so tests and local dev work offline. Invalid variants for validator tests are derived in code from the valid fixture (`tests/curate-validate.test.ts`), one per violation code, instead of separate `selection-invalid-*.json` files.
 
 ## 2. Inputs to the selection call
 
@@ -35,7 +36,7 @@ Built in `lib/ai/prompts.ts`.
 4. **Few-shot examples**: up to 5 most recent rows from `style_examples` where `similarity < 0.9` (Shreya's edits teach more than unedited ones), shown as `AI wrote → Shreya changed to`. **Never pad with seeded past-issue commentary** (it is placeholder text, not her voice; decision 2026-10-12). With fewer than 3 rows, the section is shorter or omitted; the style guide's Examples section still supplies the voice.
 5. **Topic taxonomy** (fixed list below).
 
-**Trimming rule (when candidates > 80):** keep newest first, at most 6 per source, and **do not rank by popularity or number of outlets covering a story**, because under-reported stories are what Shreya wants. Dedupe clusters keep one representative (earliest published, then longest snippet).
+**Trimming rule (when candidates > 80; changed 2026-10-12, user decision):** split the 80 slots **evenly across the IST days** present in the window, newest first within each day, at most 6 per outlet overall; unused slots are refilled newest-first. **Do not rank by popularity or number of outlets covering a story**, because under-reported stories are what Shreya wants. Dedupe clusters keep one representative (earliest published, then longest snippet). (The original "newest first" rule would have covered only the last ~10–12 hours of a 1,000-candidate week.)
 
 ## 3. Topic taxonomy — `content/topics.json` (confirm with user)
 

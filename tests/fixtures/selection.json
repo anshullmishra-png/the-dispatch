@@ -1,0 +1,19 @@
+{
+  "picks": [
+    { "article_id": "a01", "topic": "exits_markets", "signal_type": "counterintuitive", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Offline placeholder commentary for this story. It keeps the draft shape valid without making any claim." },
+    { "article_id": "a02", "topic": "consumer_d2c", "signal_type": "trend_link", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Placeholder text written for local testing only. Nothing here comes from the article." },
+    { "article_id": "a03", "topic": "climate_deeptech", "signal_type": "under_reported", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] This line stands in for real commentary. Gemini writes the real version in live runs." },
+    { "article_id": "a04", "topic": "commerce_logistics", "signal_type": "counterintuitive", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] A stand-in so the pipeline can run offline. The live draft replaces it." },
+    { "article_id": "a05", "topic": "policy_regulation", "signal_type": "trend_link", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Test-only commentary with no facts in it. Real runs use the model." },
+    { "article_id": "a06", "topic": "fintech", "signal_type": "under_reported", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Offline fixture text for the review flow. It is never sent to readers." },
+    { "article_id": "a07", "topic": "fintech", "signal_type": "trend_link", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Fixture commentary used by tests and local development. It makes no claims." },
+    { "article_id": "a08", "topic": "funding_vc", "signal_type": "counterintuitive", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Sample text that satisfies the shape rules. The model supplies the real words." }
+  ],
+  "backups": [
+    { "article_id": "a09", "topic": "consumer_d2c", "signal_type": "under_reported", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Backup placeholder for swap testing. It holds no facts." },
+    { "article_id": "a10", "topic": "ai_saas", "signal_type": "trend_link", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Second backup placeholder. It exists so a swap needs no model call." },
+    { "article_id": "a11", "topic": "fintech", "signal_type": "counterintuitive", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Third backup placeholder. Real backups come from Gemini." },
+    { "article_id": "a12", "topic": "ai_saas", "signal_type": "under_reported", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Fourth backup placeholder. It is replaced in live runs." },
+    { "article_id": "a13", "topic": "fintech", "signal_type": "trend_link", "rationale": "[MOCK] Placeholder rationale for offline runs.", "commentary": "[MOCK] Fifth backup placeholder. It keeps the bench at five stories." }
+  ]
+}

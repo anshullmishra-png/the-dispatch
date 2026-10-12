@@ -163,6 +163,7 @@ describe("matchLastFour", () => {
     buildLastFourEntry({
       issueId: "issue-oct-8",
       issueDate: "2026-10-08",
+      topic: "ai_saas",
       title: "AI-focused byteXL raises $9 Mn from Elevar Equity, Kalaari Capital",
       headline: "byteXL's $9 Mn round is a bet on job-ready engineers",
       canonicalHash: "hash-bytexl",

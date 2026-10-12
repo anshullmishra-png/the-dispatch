@@ -1,5 +1,15 @@
 # Changelog
 
+## Phase 4 — Gemini selection (2026-10-12)
+
+- `content/style-guide.md` filled (AI-generated with the user's permission; recorded in `CLAUDE.md` §4). Seeded as style guide v2.
+- `lib/ai/gemini.ts`: the only Gemini caller. JSON-schema output, 3 retries with backoff + jitter, 50 s timeout, caller deadline, concurrency 1, mock mode, prompt hash in logs.
+- `lib/ai/prompts.ts`, `lib/ai/schemas.ts` (strict schema with per-call id enum; lenient parse shape).
+- `lib/curate/`: `lint.ts` (voice + grounding), `validate.ts` (all 8 violation codes), `candidates.ts` (week-spread trimming), `select.ts` (validate → 2 re-prompts → deterministic repair), `draft.ts` (transactional, locked once confirmed).
+- `GET /api/cron/curate`: bearer auth, per-issue idempotency, ingest guard, dedupe finalize, selection, draft; stats (tokens, attempts, violations) in `pipeline_runs`.
+- Model switched to `gemini-3.6-flash` after `gemini-3.8-flash` failed 4/4 live attempts.
+- Dependency added: `@google/genai` (listed in `docs/02-ARCHITECTURE.md` §2).
+
 ## Phase 3 — Dedupe (2026-10-12)
 
 - `lib/dedupe/trigram.ts`: JS port of `pg_trgm` similarity (matches the PostgreSQL docs example; integration-tested against Postgres).
