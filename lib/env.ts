@@ -27,6 +27,16 @@ export const EnvSchema = z.object({
 
   GEMINI_API_KEY: z.string().min(1).optional(),
   GEMINI_MODEL: z.string().min(1).optional(),
+  // Comma-separated Flash models tried in rotation when the primary is overloaded.
+  GEMINI_FALLBACK_MODELS: z
+    .string()
+    .default("")
+    .transform((s) =>
+      s
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean),
+    ),
   GEMINI_MOCK: bool(false),
 
   NEWS_API_KEY: z.string().min(1).optional(),

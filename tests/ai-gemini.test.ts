@@ -69,6 +69,40 @@ describe("generateJson", () => {
     expect(client.calls).toBe(4);
   });
 
+  it("rotates to a fallback Flash model when the primary is overloaded", async () => {
+    vi.stubEnv("GEMINI_FALLBACK_MODELS", "gemini-3-flash-preview");
+    resetEnvCache();
+    const models: string[] = [];
+    const client: GeminiClient = {
+      models: {
+        generateContent: async (req) => {
+          models.push(req.model);
+          if (req.model === "gemini-3.6-flash") throw new ApiError({ message: "busy", status: 503 });
+          return { ...ok('{"ok":true}'), modelVersion: req.model };
+        },
+      },
+    };
+    const res = await call(client);
+    expect(models).toEqual(["gemini-3.6-flash", "gemini-3-flash-preview"]);
+    expect(res).toMatchObject({ attempts: 2, model: "gemini-3-flash-preview" });
+  });
+
+  it("alternates models across all attempts", async () => {
+    vi.stubEnv("GEMINI_FALLBACK_MODELS", "gemini-3-flash-preview, gemini-3.6-flash");
+    resetEnvCache();
+    const models: string[] = [];
+    const client: GeminiClient = {
+      models: {
+        generateContent: async (req) => {
+          models.push(req.model);
+          throw new ApiError({ message: "busy", status: 503 });
+        },
+      },
+    };
+    await expect(call(client)).rejects.toMatchObject({ attempts: 4 });
+    expect(models).toEqual(["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.6-flash", "gemini-3-flash-preview"]);
+  });
+
   it("does not retry a non-retryable error", async () => {
     const client = fakeClient(fail(400));
     await expect(call(client)).rejects.toBeInstanceOf(GeminiError);

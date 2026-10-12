@@ -117,6 +117,8 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
   }
 
   const { GEMINI_MODEL } = requireEnv("GEMINI_MODEL");
+  // Attempts rotate primary → fallbacks → primary…, sharing one backoff schedule.
+  const models = [GEMINI_MODEL, ...e.GEMINI_FALLBACK_MODELS.filter((m) => m !== GEMINI_MODEL)];
   const client = opts.client ?? getClient();
   const sleep = opts.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
 
@@ -142,9 +144,10 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
       }
 
       attempts += 1;
+      const model = models[(attempts - 1) % models.length] as string;
       try {
         const res = await client.models.generateContent({
-          model: GEMINI_MODEL,
+          model,
           contents: opts.user,
           config: {
             systemInstruction: opts.system,
@@ -175,12 +178,13 @@ export async function generateJson<T>(opts: GenerateJsonOptions<T>): Promise<Gen
           thoughts: res.usageMetadata?.thoughtsTokenCount ?? 0,
         };
         const latencyMs = Date.now() - started;
-        opts.log.info("gemini ok", { label: opts.label, attempts, latencyMs, usage, model: res.modelVersion ?? GEMINI_MODEL, promptHash: hash });
-        return { data, usage, attempts, latencyMs, model: res.modelVersion ?? GEMINI_MODEL, promptHash: hash };
+        const used = res.modelVersion ?? model;
+        opts.log.info("gemini ok", { label: opts.label, attempts, latencyMs, usage, model: used, promptHash: hash });
+        return { data, usage, attempts, latencyMs, model: used, promptHash: hash };
       } catch (err) {
         if (err instanceof GeminiError) throw err;
         lastError = err;
-        opts.log.warn("gemini attempt failed", { label: opts.label, attempt: attempts, error: describe(err), promptHash: hash });
+        opts.log.warn("gemini attempt failed", { label: opts.label, attempt: attempts, model, error: describe(err), promptHash: hash });
         if (!isRetryable(err)) break;
       }
     }

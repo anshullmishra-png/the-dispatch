@@ -47,6 +47,7 @@ export async function GET() {
         collectingIssue: collectingIssueDate(now),
         targetIssue: targetIssueDate(now),
         model: e.GEMINI_MODEL ?? null,
+        fallbackModels: e.GEMINI_FALLBACK_MODELS,
         geminiMock: e.GEMINI_MOCK,
         demoMode: e.DEMO_MODE,
         db: dbStatus,

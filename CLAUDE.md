@@ -113,7 +113,8 @@ Document all in `.env.example` (no real values). Never commit `.env*` except the
 |---|---|
 | `DATABASE_URL` | Neon pooled connection string |
 | `GEMINI_API_KEY` | Google AI Studio key |
-| `GEMINI_MODEL` | Flash model ID (verify current ID in AI Studio docs) |
+| `GEMINI_MODEL` | Flash model ID (`gemini-3.6-flash`) |
+| `GEMINI_FALLBACK_MODELS` | Comma-separated Flash models tried in rotation on 503/429/timeout (`gemini-3-flash-preview`) |
 | `GEMINI_MOCK` | `true` to use fixtures |
 | `NEWS_API_KEY` | GNews key |
 | `TELEGRAM_BOT_TOKEN` | from @BotFather |
