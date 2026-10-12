@@ -311,7 +311,11 @@ export interface SwapResult extends TransitionResult {
 }
 
 /** Swap needs no AI call: the next backup takes the same position. */
-export async function swapStory(issueId: string, storyId: string, { actorTgId }: Actor): Promise<SwapResult> {
+export async function swapStory(
+  issueId: string,
+  storyId: string,
+  { actorTgId, backupId }: Actor & { /** Web: Shreya picked this backup; Telegram takes the next by rank. */ backupId?: string },
+): Promise<SwapResult> {
   return withTransaction(async (tx) => {
     await lockReviewable(tx, issueId);
     const old = await lockLivePick(tx, issueId, storyId);
@@ -322,7 +326,12 @@ export async function swapStory(issueId: string, storyId: string, { actorTgId }:
       .for("update");
     const remainingTopics = stories.filter((s) => s.role === "pick" && s.state !== "SWAPPED_OUT" && s.id !== old.id).map((s) => s.topic);
     const backups = stories.filter((s) => s.role === "backup" && s.state === "PENDING");
-    const choice = chooseBackup(remainingTopics, backups);
+    let choice = chooseBackup(remainingTopics, backups);
+    if (backupId) {
+      const chosen = backups.find((b) => b.id === backupId);
+      if (!chosen) throw new ReviewError("no_backups", "that backup is no longer available");
+      choice = { backup: chosen, spreadOk: new Set([...remainingTopics, chosen.topic]).size >= MIN_TOPICS };
+    }
     if (!choice) throw new ReviewError("no_backups");
 
     // Order matters: free the position before the backup takes it (partial unique index).

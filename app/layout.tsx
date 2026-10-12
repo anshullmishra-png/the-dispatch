@@ -24,9 +24,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 ◆
               </Link>
               <nav className="nav-links" aria-label="Main">
+                <Link href="/desk">Desk</Link>
                 <Link href="/issues">Archive</Link>
                 <Link href="/articles">Articles</Link>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/status">Status</Link>
               </nav>
             </div>
             <Link href="/" className="wordmark">
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <Link href="/issues">Archive</Link>
                 </li>
                 <li>
-                  <Link href="/dashboard">Dashboard</Link>
+                  <Link href="/desk">Editor&rsquo;s desk</Link>
+                </li>
+                <li>
+                  <Link href="/status">System status</Link>
                 </li>
                 <li>
                   <Link href="/articles">Articles</Link>

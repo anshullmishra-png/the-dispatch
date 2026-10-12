@@ -4,7 +4,8 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 (Problem Statement 17, MESA Cohort C4 — AI and its Applications).
 
 - **Live site:** https://the-dispatch-pi.vercel.app
-  - [Dashboard](https://the-dispatch-pi.vercel.app/dashboard): issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
+  - [Editor's desk](https://the-dispatch-pi.vercel.app/desk): Shreya's workspace. Her review, the scheduled delivery and the actual delivery outcome as three separate states; what needs her attention; every story with Gemini's reason, fact flags and voice check; alternatives; email preview. Signed in with the editor passcode (`ADMIN_TOKEN`) she can keep, edit, swap, remove and confirm here too: the same backend, audit trail and send gate as Telegram, and her Telegram cards update. Visitors see it read-only
+  - [System status](https://the-dispatch-pi.vercel.app/status): issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
   - Also on the dashboard: the **live send gate** (all six checks for this week's issue), a week timeline, the **audit trail** of every Telegram review action, every send attempt including those the gate held, the delivery-mode and list-hygiene panels, and [the email preview](https://the-dispatch-pi.vercel.app/preview)
   - [Articles](https://the-dispatch-pi.vercel.app/articles): every article collected this week and what the pipeline decided (duplicate of which story and how similar, seen in which past issue, candidate, picked, removed), with filters and search, plus a **"Check a headline"** box that runs the real dedupe rule against this week and the last four issues
   - [Archive](https://the-dispatch-pi.vercel.app/issues) and issue pages, [style guide](https://the-dispatch-pi.vercel.app/style-guide), [health](https://the-dispatch-pi.vercel.app/api/health)
@@ -98,7 +99,7 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 | R3 / R6 not in last 4 issues | `lib/dedupe/history.ts`, validator `LAST_FOUR_HIT` | unit tests; `seen_before` status |
 | R4 8–10 picks · R5 signal · R7 ≥3 topics | `lib/curate/validate.ts` (8 violation codes), re-prompt + repair | live drafts: 9 picks, 6–7 topics |
 | R8 2–3 lines in her voice | `content/style-guide.md`, voice lint | lint unit tests; flags on cards |
-| R9–R11 Telegram review + confirm | `lib/telegram`, `lib/approval/review.ts` | `e2e:telegram` 17/17 |
+| R9–R11 Telegram review + confirm | `lib/telegram`, `lib/approval/review.ts` (also used by the web desk) | `e2e:telegram` 18/18 |
 | R12 never sends autonomously | `assertSendAllowed`, `runSend` | 6 guard unit tests, DB tests, `e2e:send` |
 | R13 reminder | `/api/cron/remind` | sends only while `IN_REVIEW` (e2e) |
 | R14 email Thursday | `lib/mail`, `/api/cron/send` | email in the allowlisted inbox; send_log counts |
