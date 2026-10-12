@@ -36,8 +36,11 @@ describe.skipIf(!process.env.DATABASE_URL)("Neon database (integration)", () => 
              count(*) filter (where not is_test)::int as real,
              count(*) filter (where status = 'unsubscribed')::int as unsub,
              count(*) filter (where status = 'bounced')::int as bounced
-      from subscribers`);
-    expect(subs).toMatchObject({ total: 2200, real: 1, unsub: 1, bounced: 1 });
+      from subscribers where source = 'seed'`);
+    // The live e2e runs unsubscribe/bounce a few seeded rows on purpose, so statuses are "at least".
+    expect(subs).toMatchObject({ total: 2200, real: 1 });
+    expect(subs?.unsub).toBeGreaterThanOrEqual(1);
+    expect(subs?.bounced).toBeGreaterThanOrEqual(1);
 
     const guides = await rows<{ active: boolean }>(sql`select active from style_guides where active`);
     expect(guides).toHaveLength(1);

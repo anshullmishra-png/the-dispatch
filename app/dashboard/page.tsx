@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { dashboardData } from "@/lib/site/queries";
-import { topicLabel } from "@/lib/telegram/cards";
+import Link from "next/link";
+import { loadReview } from "@/lib/approval/review";
+import { dashboardData, operationsData } from "@/lib/site/queries";
+import { upcomingJobs } from "@/lib/site/schedule";
+import { formatFlag, topicLabel } from "@/lib/telegram/cards";
 import { formatIssueDateShort, formatIstDateTime } from "@/lib/time";
 import { Refresher } from "./refresher";
 
@@ -58,8 +61,22 @@ function Bars({ data, label }: { data: Record<string, number>; label: (k: string
   );
 }
 
+const SIGNALS: Record<string, string> = { counterintuitive: "Counterintuitive", under_reported: "Under-reported", trend_link: "Trend link" };
+const REVIEW_STATE: Record<string, string> = { PENDING: "○ pending review", KEPT: "● kept", EDITED: "● edited by Shreya", SWAPPED_OUT: "swapped out" };
+
+function draftLabel(status: string): string {
+  if (status === "SENT") return "Sent issue";
+  if (status === "CONFIRMED" || status === "SENDING") return "Confirmed by Shreya: goes out Thursday morning";
+  if (status === "HELD") return "Draft on hold: not confirmed";
+  return "Draft — not yet confirmed";
+}
+
 export default async function Dashboard() {
-  const d = await dashboardData();
+  const now = new Date();
+  const [d, ops] = await Promise.all([dashboardData(), operationsData()]);
+  const review = d.issue && d.figures.picked ? await loadReview(d.issue.id) : null;
+  const next = upcomingJobs(now)[0];
+  const eligible = d.figures.eligible;
   const status = d.issue?.status ?? "COLLECTING";
   const marker = MARKERS[status] ?? { glyph: "○" };
   const voicePct = d.voice.total ? Math.round((d.voice.unedited / d.voice.total) * 100) : null;
@@ -82,6 +99,26 @@ export default async function Dashboard() {
             </p>
           </div>
         </div>
+        <dl className="strip">
+          <div>
+            <dt>Last ingest</dt>
+            <dd>{ops.lastIngestAt ? formatIstDateTime(ops.lastIngestAt) : "never"}</dd>
+          </div>
+          <div>
+            <dt>Next scheduled job</dt>
+            <dd>{next ? `${next.job} · ${formatIstDateTime(next.next)}` : "—"}</dd>
+          </div>
+          <div>
+            <dt>Feeds failing / paused</dt>
+            <dd>
+              {ops.failingFeeds} / {ops.pausedFeeds}
+            </dd>
+          </div>
+          <div>
+            <dt>Eligible for Gemini</dt>
+            <dd>{eligible.toLocaleString("en-IN")} stories</dd>
+          </div>
+        </dl>
         <div className="figures" style={{ marginTop: 48 }}>
           {[
             [d.figures.fetched, "articles fetched this week"],
@@ -96,6 +133,60 @@ export default async function Dashboard() {
           ))}
         </div>
       </section>
+
+      {review ? (
+        <section className="section">
+          <p className="eyebrow">{draftLabel(review.issue.status)}</p>
+          <h2 className="section-heading">This week&rsquo;s picks and why</h2>
+          <p style={{ marginTop: 8 }}>
+            Gemini read {d.figures.candidates.toLocaleString("en-IN")} candidates in one call and chose these. Each carries the kind of signal it
+            found and its reason. ⚠ marks a number or name the grounding check could not find in the source. Shreya reviews every story on
+            Telegram{review.issue.status === "SENT" ? "; this is what was sent." : " before anything is sent."}{" "}
+            <Link href="/articles?status=picked">See them among all articles →</Link>
+          </p>
+          <ol className="draft">
+            {review.picks.map((p) => (
+              <li key={p.id} className={p.state === "SWAPPED_OUT" ? "out" : undefined}>
+                <span className="dropcap">{p.state === "SWAPPED_OUT" ? "×" : p.position}</span>
+                <div>
+                  <p className="story-topic">
+                    {topicLabel(p.topic)} · {SIGNALS[p.signalType] ?? p.signalType}
+                  </p>
+                  <h3 className="card-heading">
+                    <a href={p.url} rel="noopener noreferrer" target="_blank">
+                      {p.headline}
+                    </a>
+                  </h3>
+                  {p.state === "SWAPPED_OUT" ? (
+                    <p className="ui-label">{p.removed ? "Removed by Shreya" : "Swapped out by Shreya for a backup"}</p>
+                  ) : (
+                    <>
+                      <p>{p.commentary}</p>
+                      <p className="eyebrow" style={{ marginTop: 8 }}>
+                        Why: {p.rationale}
+                      </p>
+                      {p.flags.map((f) => (
+                        <p key={f} className="flag">
+                          ⚠ {formatFlag(f)}
+                        </p>
+                      ))}
+                      <p className="ui-label" style={{ marginTop: 8 }}>
+                        {REVIEW_STATE[p.state] ?? p.state}
+                        {p.replacedPosition ? " · promoted from backups" : ""}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+          {review.unusedBackups.length ? (
+            <p className="muted" style={{ marginTop: 16, fontSize: 16 }}>
+              {review.unusedBackups.length} ranked backups wait for Swap: {review.unusedBackups.map((b) => b.headline).join(" · ")}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="section">
         <div className="grid-2">
@@ -116,6 +207,39 @@ export default async function Dashboard() {
             {d.voice.total ? ` (${d.voice.unedited} of ${d.voice.total} confirmed stories)` : ""}
           </p>
         </div>
+      </section>
+
+      <section className="section">
+        <h2 className="card-heading">Delivery history</h2>
+        <div className="table-wrap" style={{ marginTop: 16 }}>
+          <table className="ruled">
+            <thead>
+              <tr>
+                <th scope="col">Issue</th>
+                <th scope="col">Sent (IST)</th>
+                <th scope="col">Delivered to Resend</th>
+                <th scope="col">Skipped (demo mode)</th>
+                <th scope="col">Failed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ops.delivery.map((r) => (
+                <tr key={r.issue_date}>
+                  <td>{formatIssueDateShort(r.issue_date)}</td>
+                  <td>{r.sent_at ? formatIstDateTime(new Date(r.sent_at)).replace(" IST", "") : "—"}</td>
+                  <td>{r.sent}</td>
+                  <td>{r.skipped.toLocaleString("en-IN")}</td>
+                  <td>{r.failed ? `! ${r.failed}` : 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {ops.delivery.length === 0 ? <p style={{ marginTop: 16 }}>No sends yet.</p> : null}
+        </div>
+        <p className="muted" style={{ marginTop: 16, fontSize: 16 }}>
+          Seed issues predate the system, so they have no send log. Bounces and unsubscribes appear in &ldquo;Subscribers by status&rdquo;.{" "}
+          <Link href="/style-guide">Read the style guide →</Link>
+        </p>
       </section>
 
       <section className="section">

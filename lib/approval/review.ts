@@ -10,7 +10,15 @@ import { db, type Tx, withTransaction } from "@/lib/db";
 import type { CardStory, DraftSummary, StoryState } from "@/lib/telegram/cards";
 import { istDate } from "@/lib/time";
 
-export type ReviewFailure = "not_found" | "ambiguous" | "issue_locked" | "not_a_live_pick" | "no_backups" | "empty_text";
+export type ReviewFailure =
+  | "not_found"
+  | "ambiguous"
+  | "issue_locked"
+  | "not_a_live_pick"
+  | "no_backups"
+  | "empty_text"
+  | "too_few_stories"
+  | "too_few_topics";
 
 export class ReviewError extends Error {
   constructor(
@@ -67,6 +75,17 @@ export function chooseBackup(remainingTopics: readonly string[], backups: readon
   return restoring ? { backup: restoring, spreadOk: true } : { backup: first, spreadOk: false };
 }
 
+/**
+ * Remove (user decision 2026-10-12): allowed only if at least 8 picks and 3
+ * topics remain afterwards, so a removal can never make the draft invalid.
+ */
+export function canRemove(livePicks: readonly { id: string; topic: string }[], storyId: string): "ok" | "too_few_stories" | "too_few_topics" {
+  const rest = livePicks.filter((p) => p.id !== storyId);
+  if (rest.length < PICKS_MIN) return "too_few_stories";
+  if (new Set(rest.map((p) => p.topic)).size < MIN_TOPICS) return "too_few_topics";
+  return "ok";
+}
+
 export function draftWarnings(livePicks: number, topics: number): string[] {
   const w: string[] = [];
   if (livePicks < PICKS_MIN) w.push(`Only ${livePicks} valid ${livePicks === 1 ? "story" : "stories"}; the draft was not padded with weak ones.`);
@@ -120,11 +139,14 @@ async function loadStories(exec: Exec, issueId: string): Promise<ReviewStory[]> 
     .innerJoin(articles, eq(articles.id, issueStories.articleId))
     .where(eq(issueStories.issueId, issueId))
     .orderBy(asc(issueStories.position), asc(issueStories.backupRank), asc(issueStories.createdAt));
+  // Out of the issue with no replacement pointing at it = removed, not swapped.
+  const replaced = new Set(rows.map((r) => r.swappedFrom).filter(Boolean));
   return rows.map((r) => ({
     ...r,
     position: r.position ?? 0,
     flags: Array.isArray(r.flags) ? (r.flags as string[]) : [],
     replacedPosition: r.swappedFrom !== null,
+    removed: r.state === "SWAPPED_OUT" && !replaced.has(r.id),
   }));
 }
 
@@ -321,6 +343,37 @@ export async function swapStory(issueId: string, storyId: string, { actorTgId }:
     });
     const t = await applyTransition(tx, issueId, "edit", { actorTgId });
     return { ...t, oldId: old.id, replacementId: choice.backup.id, position: old.position ?? 0, spreadOk: choice.spreadOk };
+  });
+}
+
+/**
+ * Takes a pick out of the issue without a replacement, then closes the gap so
+ * positions stay 1..n (the email numbers stories by position).
+ */
+export async function removeStory(issueId: string, storyId: string, { actorTgId }: Actor): Promise<TransitionResult & { position: number }> {
+  return withTransaction(async (tx) => {
+    await lockReviewable(tx, issueId);
+    const story = await lockLivePick(tx, issueId, storyId);
+    const live = await tx
+      .select({ id: issueStories.id, topic: issueStories.topic })
+      .from(issueStories)
+      .where(and(eq(issueStories.issueId, issueId), eq(issueStories.role, "pick"), sql`${issueStories.state} <> 'SWAPPED_OUT'`))
+      .for("update");
+    const verdict = canRemove(live, storyId);
+    if (verdict !== "ok") throw new ReviewError(verdict);
+    const position = story.position ?? 0;
+    await tx.update(issueStories).set({ state: "SWAPPED_OUT" }).where(eq(issueStories.id, storyId));
+    await tx.update(articles).set({ status: "rejected" }).where(eq(articles.id, story.articleId));
+    // Two steps so the partial unique (issue, position) index never sees a clash mid-update.
+    const later = and(eq(issueStories.issueId, issueId), eq(issueStories.role, "pick"), sql`${issueStories.state} <> 'SWAPPED_OUT'`, sql`${issueStories.position} > ${position}`);
+    await tx.update(issueStories).set({ position: sql`-${issueStories.position}` }).where(later);
+    await tx
+      .update(issueStories)
+      .set({ position: sql`-${issueStories.position} - 1` })
+      .where(and(eq(issueStories.issueId, issueId), eq(issueStories.role, "pick"), sql`${issueStories.position} < 0`));
+    await tx.insert(approvals).values({ issueId, storyId, action: "remove", actorTgId, detail: { position } });
+    const t = await applyTransition(tx, issueId, "edit", { actorTgId });
+    return { ...t, position };
   });
 }
 

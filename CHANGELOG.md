@@ -2,6 +2,7 @@
 
 ## Phase 10 — Hardening and submission (2026-10-12)
 
+- After review against the brief: `/articles` library, dashboard draft panel, pipeline strip, delivery history, `/style-guide`; 🗑 Remove on Telegram (migration 0003); e2e covers Remove.
 - README: overview, architecture, setup, env vars, demo script, known limits, examiner Q&A. Components Map in `docs/Components-Map.xlsx`.
 - Final secret scan of the git history.
 

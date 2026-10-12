@@ -122,7 +122,7 @@ create table approvals (                         -- audit trail
   issue_id uuid not null references issues(id) on delete cascade,
   story_id uuid references issue_stories(id),
   action text not null check (action in
-    ('keep','edit','swap','approve_all','confirm','unconfirm','hold','send_now','reset_by_edit')),
+    ('keep','edit','swap','approve_all','confirm','unconfirm','hold','send_now','reset_by_edit','remove')),
   actor_tg_id bigint,
   content_hash text,
   detail jsonb,

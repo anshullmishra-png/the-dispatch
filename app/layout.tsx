@@ -25,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </Link>
               <nav className="nav-links" aria-label="Main">
                 <Link href="/issues">Archive</Link>
+                <Link href="/articles">Articles</Link>
                 <Link href="/dashboard">Dashboard</Link>
               </nav>
             </div>
@@ -50,6 +51,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </li>
                 <li>
                   <Link href="/dashboard">Dashboard</Link>
+                </li>
+                <li>
+                  <Link href="/articles">Articles</Link>
+                </li>
+                <li>
+                  <Link href="/style-guide">Style guide</Link>
                 </li>
               </ul>
             </div>

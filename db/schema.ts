@@ -222,7 +222,7 @@ export const approvals = pgTable(
   (t) => [
     check(
       "approvals_action_check",
-      sql`${t.action} in ('keep','edit','swap','approve_all','confirm','unconfirm','hold','send_now','reset_by_edit')`,
+      sql`${t.action} in ('keep','edit','swap','approve_all','confirm','unconfirm','hold','send_now','reset_by_edit','remove')`,
     ),
   ],
 );

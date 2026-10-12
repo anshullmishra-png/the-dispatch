@@ -10,6 +10,7 @@ import {
   holdIssue,
   keepStory,
   loadReview,
+  removeStory,
   ReviewError,
   resolveIssue,
   resolveStory,
@@ -174,6 +175,28 @@ describe.skipIf(!process.env.DATABASE_URL)("review actions on Neon", () => {
     await confirmIssue(issueId, actor);
     const res = await swapStory(issueId, ids.p4 as string, actor);
     expect(res).toMatchObject({ replacementId: ids.b1, confirmationVoided: true, to: "IN_REVIEW" });
+  });
+
+  it("Remove is refused at 8 stories, then works at 9 and renumbers the rest", async () => {
+    expect(((await rejection(removeStory(issueId, ids.p5 as string, actor))) as ReviewError).reason).toBe("too_few_stories");
+    // Add a ninth pick so a removal is allowed.
+    const [a] = await db()
+      .insert(articles)
+      .values({ issueId, url: `https://test.invalid/review/${randomUUID()}`, canonicalUrl: "x", canonicalHash: randomUUID(), title: "Story p9", titleNorm: "story p9", status: "selected" })
+      .returning({ id: articles.id });
+    articleIds.push(a?.id as string);
+    const [s9] = await db()
+      .insert(issueStories)
+      .values({ issueId, articleId: a?.id as string, role: "pick", position: 9, topic: "ai_saas", signalType: "trend_link", rationale: "r", headline: "Story p9", commentaryAi: "A. B.", commentaryFinal: "A. B." })
+      .returning({ id: issueStories.id });
+    const res = await removeStory(issueId, ids.p5 as string, actor);
+    expect(res.position).toBe(5);
+    const review = await loadReview(issueId);
+    expect(review.livePicks.map((p) => p.position)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(review.livePicks.find((p) => p.id === s9?.id)?.position).toBe(8);
+    expect(review.picks.find((p) => p.id === ids.p5)).toMatchObject({ state: "SWAPPED_OUT", removed: true });
+    const rows = await db().select().from(approvals).where(and(eq(approvals.issueId, issueId), eq(approvals.action, "remove")));
+    expect(rows).toHaveLength(1);
   });
 
   it("Hold stops the issue; holding twice is refused; a sent issue can't be reviewed", async () => {

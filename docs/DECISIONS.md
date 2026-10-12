@@ -162,4 +162,7 @@ Checked against official provider docs on 2026-10-12.
 | Manual phone test | User asked to automate testing because of the 11 PM deadline: `npm run e2e:telegram` (17 checks) and `npm run e2e:send` (21 checks) run against production; the user's own taps (Keep, Approve all, Confirm) were also logged |
 | Resend | Account on `anshullmishra@gmail.com`, full-access key, sender `onboarding@resend.dev` (no domain) |
 | Stop after each phase | Replaced by "complete all phases, test once done" (user, Phase 6) |
+| Web app visibility (after review against the brief) | Added `/articles` (article library with status, duplicate match + similarity, Last-4 match, filters, search), dashboard draft panel (picks with signal, rationale, flags, review state), pipeline strip (last ingest, next job from `vercel.json`, failing/paused feeds, eligible stories), delivery history, `/style-guide`. **No web editor**: Telegram stays the only control surface, so there is one approval path |
+| Draft visibility | **Public**, labelled "Draft — not yet confirmed" (user chose option a) |
+| Remove story | Added to Telegram (`r:<story8>`, 🗑 Remove on its own row). Allowed only if ≥8 stories and ≥3 topics remain; later stories renumber; the article becomes `rejected`; audited as `approvals.action='remove'` (migration 0003). Stored as `SWAPPED_OUT` with no replacement, so no enum change |
 

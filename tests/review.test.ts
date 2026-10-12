@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseBackup, draftWarnings, editSimilarity } from "@/lib/approval/review";
+import { canRemove, chooseBackup, draftWarnings, editSimilarity } from "@/lib/approval/review";
 
 describe("editSimilarity", () => {
   it("is 1 for identical text and falls with the edit distance", () => {
@@ -37,6 +37,22 @@ describe("chooseBackup", () => {
 
   it("returns null with no backups left", () => {
     expect(chooseBackup(["fintech"], [])).toBeNull();
+  });
+});
+
+describe("canRemove", () => {
+  const picks = (topics: string[]) => topics.map((topic, i) => ({ id: `s${i}`, topic }));
+
+  it("allows a removal that leaves at least 8 stories and 3 topics", () => {
+    expect(canRemove(picks(["a", "a", "a", "b", "b", "c", "c", "c", "a"]), "s0")).toBe("ok");
+  });
+
+  it("refuses when only 8 stories are left", () => {
+    expect(canRemove(picks(["a", "a", "b", "b", "c", "c", "a", "b"]), "s0")).toBe("too_few_stories");
+  });
+
+  it("refuses when the rest would cover fewer than 3 topics", () => {
+    expect(canRemove(picks(["c", "a", "a", "a", "a", "b", "b", "b", "b"]), "s0")).toBe("too_few_topics");
   });
 });
 

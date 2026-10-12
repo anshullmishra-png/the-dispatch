@@ -62,6 +62,7 @@ describe("callback data", () => {
       storyCallback("keep", STORY_ID),
       storyCallback("edit", STORY_ID),
       storyCallback("swap", STORY_ID),
+      storyCallback("remove", STORY_ID),
       storyCallback("use_anyway", STORY_ID),
       issueCallback("approve_all", ISSUE_ID),
       issueCallback("hold", ISSUE_ID),
@@ -106,16 +107,23 @@ describe("renderStory", () => {
     expect(lines[4]).toBe("⚠ ungrounded number: 42%");
   });
 
-  it("a pending card has Keep, Edit, Swap and a Read link", () => {
+  it("a pending card has Keep, Edit, Swap, a Read link, and Remove on its own row", () => {
     const card = renderStory(story, 9, "IN_REVIEW");
-    expect(labels(card)).toEqual(["✅ Keep", "✏️ Edit", "🔄 Swap", "🔗 Read"]);
+    expect(labels(card)).toEqual(["✅ Keep", "✏️ Edit", "🔄 Swap", "🔗 Read", "🗑 Remove"]);
+    expect(card.replyMarkup?.inline_keyboard[1]?.[0]?.callback_data).toBe("r:3f2a9c1e");
     expect(buttons(card)[3]?.url).toBe(story.url);
   });
 
   it("a kept card shows the state and drops Keep", () => {
     const card = renderStory({ ...story, state: "KEPT" }, 9, "IN_REVIEW");
     expect(card.text).toContain("✅ Kept");
-    expect(labels(card)).toEqual(["✏️ Edit", "🔄 Swap", "🔗 Read"]);
+    expect(labels(card)).toEqual(["✏️ Edit", "🔄 Swap", "🔗 Read", "🗑 Remove"]);
+  });
+
+  it("a removed card says Removed and keeps only Read", () => {
+    const card = renderStory({ ...story, state: "SWAPPED_OUT", removed: true }, 9, "IN_REVIEW");
+    expect(card.text).toContain("🗑 <b>Removed</b>");
+    expect(labels(card)).toEqual(["🔗 Read"]);
   });
 
   it("a swapped-out card keeps only Read", () => {
@@ -146,7 +154,7 @@ describe("renderStory", () => {
 describe("renderFinal", () => {
   it("summarises states and topics; Confirm carries the hash prefix", () => {
     const card = renderFinal(summary);
-    expect(card.text).toContain("✅ Kept 5 · ✏️ Edited 2 · ⏳ Pending 2 · 🔄 Swapped 1");
+    expect(card.text).toContain("✅ Kept 5 · ✏️ Edited 2 · ⏳ Pending 2 · 🔄 Out 1");
     expect(card.text).toContain("Topics (4): AI &amp; SaaS 3 · Fintech 3 · Funding &amp; VC 2 · Consumer &amp; D2C 1");
     expect(labels(card)).toEqual(["✅ Approve all remaining", "🚀 Confirm final draft", "⏸ Hold"]);
     expect(buttons(card)[1]?.callback_data).toBe("c:a1b2c3d4:deadbeef");

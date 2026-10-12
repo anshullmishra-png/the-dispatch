@@ -4,6 +4,7 @@
 //
 //   npm run demo:week                    wait for Shreya to confirm on Telegram
 //   npm run demo:week -- --auto-confirm  tap Approve all + Confirm as Shreya
+//   npm run demo:week -- --stop-after-notify  leave the draft waiting for Shreya's review
 //   npm run demo:week -- --reset         first reset this week's issue to COLLECTING
 //                                        (keeps articles; drops draft, reviews, send log)
 import "./_env";
@@ -77,6 +78,11 @@ async function main() {
   if (curate.status !== 200) throw new Error("curate failed; see above");
   const notify = await job("notify");
   if (notify.status !== 200) throw new Error("notify failed; see above");
+
+  if (args.has("--stop-after-notify")) {
+    console.log(`\nDraft delivered to Telegram and waiting for review (remind/send will act on it on schedule).`);
+    process.exit(0);
+  }
 
   issue = await find();
   if (!issue) throw new Error("issue vanished");

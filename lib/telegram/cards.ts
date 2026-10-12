@@ -40,14 +40,14 @@ export function formatFlag(flag: string): string {
 
 // ---------------------------------------------------------------- callback data
 
-export type StoryAction = "keep" | "edit" | "swap" | "use_anyway";
+export type StoryAction = "keep" | "edit" | "swap" | "remove" | "use_anyway";
 export type IssueAction = "approve_all" | "hold" | "send_now";
 export type Callback =
   | { kind: "story"; action: StoryAction; story8: string }
   | { kind: "issue"; action: IssueAction; issue8: string }
   | { kind: "confirm"; issue8: string; hash8: string };
 
-const STORY_CODES: Record<string, StoryAction> = { k: "keep", e: "edit", s: "swap", u: "use_anyway" };
+const STORY_CODES: Record<string, StoryAction> = { k: "keep", e: "edit", s: "swap", r: "remove", u: "use_anyway" };
 const ISSUE_CODES: Record<string, IssueAction> = { a: "approve_all", h: "hold", n: "send_now" };
 const code = (map: Record<string, string>, action: string) => Object.keys(map).find((k) => map[k] === action) as string;
 
@@ -64,7 +64,7 @@ export function confirmCallback(issueId: string, contentHash: string): string {
 }
 
 export function parseCallback(data: string): Callback | null {
-  let m = /^([kesu]):([0-9a-f]{8})$/.exec(data);
+  let m = /^([kesru]):([0-9a-f]{8})$/.exec(data);
   if (m) return { kind: "story", action: STORY_CODES[m[1] as string] as StoryAction, story8: m[2] as string };
   m = /^([ahn]):([0-9a-f]{8})$/.exec(data);
   if (m) return { kind: "issue", action: ISSUE_CODES[m[1] as string] as IssueAction, issue8: m[2] as string };
@@ -94,6 +94,8 @@ export interface CardStory {
   state: StoryState;
   /** Set on a backup promoted by Swap. */
   replacedPosition?: boolean;
+  /** Out of the issue with no replacement (Remove). */
+  removed?: boolean;
 }
 
 export interface DraftSummary {
@@ -134,8 +136,9 @@ export function renderStory(story: CardStory, total: number, status: IssueStatus
   const headline = escapeHtml(clip(story.headline, 300));
 
   if (story.state === "SWAPPED_OUT") {
+    const label = story.removed ? "🗑 <b>Removed</b>" : `🔄 <b>Swapped out</b> · story ${story.position}`;
     return {
-      text: [`🔄 <b>Swapped out</b> · story ${story.position}`, `<s>${headline}</s>${publisher}`].join("\n"),
+      text: [label, `<s>${headline}</s>${publisher}`].join("\n"),
       replyMarkup: { inline_keyboard: [readButton(story.url)].filter((r) => r.length) },
     };
   }
@@ -157,12 +160,15 @@ export function renderStory(story: CardStory, total: number, status: IssueStatus
     actions.push({ text: "✏️ Edit", callback_data: storyCallback("edit", story.id) });
     actions.push({ text: "🔄 Swap", callback_data: storyCallback("swap", story.id) });
   }
-  return { text: lines.join("\n"), replyMarkup: { inline_keyboard: [[...actions, ...readButton(story.url)]] } };
+  // Two rows: four labelled buttons in one row truncate on phones.
+  const rows: InlineButton[][] = [[...actions, ...readButton(story.url)]];
+  if (REVIEWABLE.includes(status)) rows.push([{ text: "🗑 Remove", callback_data: storyCallback("remove", story.id) }]);
+  return { text: lines.join("\n"), replyMarkup: { inline_keyboard: rows } };
 }
 
 function summaryLines(s: DraftSummary): string[] {
   const c = s.counts;
-  const counts = [`✅ Kept ${c.KEPT}`, `✏️ Edited ${c.EDITED}`, `⏳ Pending ${c.PENDING}`, ...(c.SWAPPED_OUT ? [`🔄 Swapped ${c.SWAPPED_OUT}`] : [])];
+  const counts = [`✅ Kept ${c.KEPT}`, `✏️ Edited ${c.EDITED}`, `⏳ Pending ${c.PENDING}`, ...(c.SWAPPED_OUT ? [`🔄 Out ${c.SWAPPED_OUT}`] : [])];
   const topics = Object.entries(s.topics)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([t, n]) => `${topicLabel(t)} ${n}`);

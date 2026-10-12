@@ -22,6 +22,13 @@
       "when": 1791810046257,
       "tag": "0002_telegram_pending_text",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791813903020,
+      "tag": "0003_approvals_remove",
+      "breakpoints": true
     }
   ]
 }

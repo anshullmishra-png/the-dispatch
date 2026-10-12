@@ -11,6 +11,7 @@ import {
   holdIssue,
   keepStory,
   lintEdit,
+  removeStory,
   loadReview,
   ReviewError,
   resolveIssue,
@@ -204,6 +205,10 @@ export function reviewErrorText(err: ReviewError): string {
       return "That story was swapped out, so it can't be changed.";
     case "no_backups":
       return "No backups left to swap in. Edit the commentary instead.";
+    case "too_few_stories":
+      return "Can't remove: the issue needs at least 8 stories. Swap it for a backup instead.";
+    case "too_few_topics":
+      return "Can't remove: the rest would cover fewer than 3 topics. Swap it instead.";
     case "empty_text":
       return err.message === "text too long" ? "That's too long for a commentary." : "That message was empty.";
     default:
@@ -258,7 +263,7 @@ async function currentIssueId(): Promise<string | null> {
 }
 
 async function onStoryAction(
-  action: "keep" | "edit" | "swap" | "use_anyway",
+  action: "keep" | "edit" | "swap" | "remove" | "use_anyway",
   issueId: string,
   storyId: string,
   chatId: number,
@@ -300,6 +305,18 @@ async function onStoryAction(
     }
     await answer("Saving your version");
     await saveEdit(chatId, actorTgId, issueId, storyId, pending.pendingText, await lintEdit(pending.pendingText), log);
+    return;
+  }
+
+  if (action === "remove") {
+    const removed = await removeStory(issueId, storyId, { actorTgId });
+    await answer(`Removed story ${removed.position}`);
+    const review = await loadReview(issueId);
+    // Positions after it moved up by one, so every card's "n/total" changes.
+    await refreshStoryCards(review, review.picks.map((p) => p.id), chatId);
+    if (removed.confirmationVoided) await sendMessage(chatId, "⚠ Draft changed after confirmation, please confirm again.");
+    await refreshSummary(review, chatId, { repost: true });
+    log.info("story removed", { storyId, position: removed.position });
     return;
   }
 

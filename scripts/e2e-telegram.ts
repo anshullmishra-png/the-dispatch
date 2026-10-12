@@ -101,6 +101,21 @@ async function main() {
   check("a backup takes the same position", replacement?.position === victim.position && replacement?.state === "PENDING");
   check("topic spread stays at least 3", new Set((await live()).map((p) => p.topic)).size >= 3);
 
+  // 4b. Remove: only while at least 8 stories and 3 topics remain; later stories move up.
+  const before9 = await live();
+  const removable = before9.length > 8 ? before9[before9.length - 1] : undefined;
+  if (removable) {
+    await tap(storyCallback("remove", removable.id));
+    const afterRemove = await live();
+    check("Remove takes a story out without a replacement", afterRemove.length === before9.length - 1 && !afterRemove.some((p) => p.id === removable.id));
+    check("positions stay 1..n after Remove", afterRemove.map((p) => p.position).join(",") === afterRemove.map((_, i) => i + 1).join(","));
+  }
+  const atMin = await live();
+  if (atMin.length === 8) {
+    await tap(storyCallback("remove", atMin[0]?.id ?? ""));
+    check("Remove is refused when it would leave fewer than 8 stories", (await live()).length === 8);
+  }
+
   // 5. Stale card and pending stories both block Confirm.
   const confirms = await count("confirm");
   await tap(confirmCallback(id, staleHash));

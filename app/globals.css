@@ -527,6 +527,98 @@ table.ruled td {
   flex-wrap: wrap;
 }
 
+/* ---------------------------------------------------------------- draft, strip, filters */
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: var(--space-3) 0;
+  border-top: var(--rule);
+  border-bottom: var(--rule);
+}
+.strip dt {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.strip dd {
+  font-size: 16px;
+  margin-top: var(--space-1);
+}
+.draft {
+  list-style: none;
+  margin-top: var(--space-4);
+}
+.draft li {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: var(--rule-faint);
+}
+.draft li.out {
+  opacity: 0.6;
+}
+.draft h3 a {
+  text-decoration: none;
+}
+.draft h3 a:hover {
+  text-decoration: underline;
+}
+.draft h3 {
+  margin: var(--space-1) 0 var(--space-2);
+}
+.flag {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  border-left: var(--rule-thick);
+  padding-left: var(--space-2);
+  margin-top: var(--space-2);
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.filter {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  border: 1px solid var(--red);
+  border-radius: 500px;
+  padding: 6px 14px;
+  color: var(--ink);
+}
+.filter.active {
+  background: var(--red);
+  color: var(--white);
+}
+.filter span {
+  font-weight: 400;
+  margin-left: 4px;
+}
+td.why {
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+.prose ul {
+  margin: var(--space-2) 0 var(--space-2) var(--space-4);
+}
+.prose p,
+.prose li {
+  margin-top: var(--space-2);
+}
+
 /* ---------------------------------------------------------------- footer */
 
 .footer {
@@ -609,7 +701,8 @@ table.ruled td {
   .card-heading {
     font-size: 20px;
   }
-  .figures {
+  .figures,
+  .strip {
     grid-template-columns: 1fr 1fr;
   }
   .figure-value {

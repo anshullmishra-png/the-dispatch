@@ -3,7 +3,10 @@
 An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosystem
 (Problem Statement 17, MESA Cohort C4 — AI and its Applications).
 
-- **Live site:** https://the-dispatch-pi.vercel.app (archive, [dashboard](https://the-dispatch-pi.vercel.app/dashboard), [health](https://the-dispatch-pi.vercel.app/api/health))
+- **Live site:** https://the-dispatch-pi.vercel.app
+  - [Dashboard](https://the-dispatch-pi.vercel.app/dashboard): issue status, pipeline strip (last ingest, next job, feed health), this week's picks with signal tag, rationale, ⚠ flags and review state, topic and subscriber bars, voice match, delivery history, run log, sources
+  - [Articles](https://the-dispatch-pi.vercel.app/articles): every article collected this week and what the pipeline decided (duplicate of which story and how similar, seen in which past issue, candidate, picked, removed), with filters and search
+  - [Archive](https://the-dispatch-pi.vercel.app/issues) and issue pages, [style guide](https://the-dispatch-pi.vercel.app/style-guide), [health](https://the-dispatch-pi.vercel.app/api/health)
 - **Editor bot:** Telegram `@thedispatchdesk_bot` (answers only Shreya's Telegram id)
 - **Components Map:** [`docs/Components-Map.xlsx`](docs/Components-Map.xlsx)
 
@@ -13,7 +16,7 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 |---|---|---|
 | Mon–Wed 08:30 | ingest | 20 RSS feeds + 5 GNews queries; every article stored once (canonical-URL hash), near-duplicates and stories from the last four issues marked |
 | Wed 14:30 | curate | One Gemini Flash call over the week's candidates picks 8–10 stories across ≥3 topics, each with a signal tag, a rationale and 2–3 sentences in Shreya's voice. Code validates, re-prompts, repairs; a grounding lint flags unsupported numbers/names |
-| Wed 17:30 | notify | Header, one card per story (✅ Keep · ✏️ Edit · 🔄 Swap · 🔗 Read) and a final card (Approve all · Confirm · Hold) on Telegram |
+| Wed 17:30 | notify | Header, one card per story (✅ Keep · ✏️ Edit · 🔄 Swap · 🗑 Remove · 🔗 Read) and a final card (Approve all · Confirm · Hold) on Telegram |
 | Wed 22:30 | remind | One reminder, only if still unconfirmed |
 | Thu 07:30 | send | **Only if Shreya confirmed** and nothing changed since: HTML + text email via Resend in batches of 100. Otherwise the issue is held and Shreya is alerted |
 | any time | webhooks | Telegram taps update stories; Resend bounce/complaint events and one-click unsubscribes update the list |
@@ -74,9 +77,9 @@ All in [`.env.example`](.env.example). `GET /api/health` shows which integration
 
 ## Demo script (5 minutes)
 
-1. **Site.** Landing, archive, dashboard (live runs, sources, subscriber counts, voice match).
+1. **Site.** Landing, archive, dashboard (picks + reasons, pipeline strip, runs, voice match), articles (filter "Duplicates" to show what dedupe caught and why).
 2. **Week on demand.** `npm run demo:week -- --reset` — ingest ×3 (second and third add 0 new: R2), curate (8–10 picks, ≥3 topics, signal tags, flags: R4–R8).
-3. **Telegram.** Cards arrive on the phone. Keep one, Edit one (a one-sentence edit is caught by the voice check), Swap one (a backup takes its place, no AI call). Confirm while a story is pending → refused. Approve all → Confirm (R9–R11). The script waits for the Confirm.
+3. **Telegram.** Cards arrive on the phone. Keep one, Edit one (a one-sentence edit is caught by the voice check), Swap one (a backup takes its place, no AI call), Remove one (refused if it would leave fewer than 8 stories or 3 topics). Confirm while a story is pending → refused. Approve all → Confirm (R9–R11). The script waits for the Confirm.
 4. **Control proof.** Edit after confirming → "please confirm again", status back to review (R12, X2).
 5. **Gate.** `npm run e2e:send` on an unconfirmed issue: send job holds it, no email, Telegram alert (R12).
 6. **Send.** Email arrives in the allowlisted inbox; dashboard shows sent / skipped_demo for 2,200 rows (R14).
@@ -126,7 +129,8 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 - **Seed issues** (4 past issues) use real headlines with placeholder commentary; they exist to exercise the Last-4 check.
 - **Grounding lint** is a heuristic: it can miss a paraphrased invention and occasionally flags a correct one.
 - A send interrupted mid-batch leaves those rows `queued` (not retried automatically); the unique send_log row guarantees no one is mailed twice.
-- No dashboard admin buttons; use `POST /api/admin/run/[job]` or `npm run demo:week`.
+- No dashboard admin buttons or web editor (Telegram is the one control surface); use `POST /api/admin/run/[job]` or `npm run demo:week`.
+- Gemini's free tier returned HTTP 429 after many curate runs on 2026-10-12; retries and the fallback model handle short waves, `GEMINI_MOCK` is the fallback for a demo.
 
 ## Docs
 
