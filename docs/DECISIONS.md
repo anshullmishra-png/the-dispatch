@@ -62,11 +62,17 @@ Claude Code: append here whenever you resolve a VERIFY item, ask the user a ques
 |---|---|---|
 | Duplicate thresholds | **Calibrated rule** replaces the documented one: ≥0.85; or ≥0.60 + 1 distinctive shared entity; or ≥0.30 + 2 distinctive shared entities | Calibrated on 509 real articles (~130k pairs). vs the doc rule: +~20 true duplicates caught, −3 false alarms. Evidence and rationale in `05-INTEGRATIONS.md` §2. `DOC_RULE` kept in code for comparison |
 
+## Answered in Phase 4 (2026-10-12)
+
+| Topic | Decision | Notes |
+|---|---|---|
+| Style guide authorship | **AI-generated with the user's explicit permission** (replaces "the user writes it"); `CLAUDE.md` §4 amended to say so | Persona and rules extend the template's starter defaults; 14 more "Never say" entries; 4 examples built from real seed-issue headlines + their real GNews snippets (trimmed to the sentences the commentary uses), each commentary checked to use only facts in its own snippet; one anti-example. 995 words, a little over the template's soft ~900 |
+
 ## Open
 
 - [x] Feed list approval (Phase 2: 20 RSS + 5 GNews)
 - [ ] Sender: custom domain or `onboarding@resend.dev` (Phase 7)
-- [ ] `content/style-guide.md` filled by the user (before Phase 4)
+- [x] `content/style-guide.md` filled (AI-generated with permission, Phase 4)
 - [ ] Confirm `DEMO_MODE` defaults to `true` when unset (see Deviations)
 - [ ] Map text: "Thu 8 AM" → "Thu 7:30–8:30 AM IST" (user edits the workbook)
 - [x] GNews starter queries replaced (Phase 2)

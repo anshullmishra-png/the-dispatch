@@ -36,7 +36,8 @@ This is an end-term exam project (AI course). The examiner checks the booklet re
 - Never give Gemini a tool, key or code path that can send email or change issue status.
 - Never put secrets in the repo, in client bundles, or in logs. Only `NEXT_PUBLIC_*` values may reach the browser, and none of ours are secrets.
 - Never trust incoming webhooks without verification (Telegram secret header + chat/user allowlist; Resend/Svix signature; cron bearer secret).
-- Never invent Shreya's voice. Style guide content comes from `content/style-guide.md`. If it is empty or still has `[FILL]` markers, stop and ask the user.
+- Never invent Shreya's voice beyond what the user has authorised. Style guide content comes from `content/style-guide.md`. If it is empty or still has `[FILL]` markers, stop and ask the user.
+  **Note (2026-10-12):** Shreya is a fictional persona from the exam brief. With the user's explicit permission, her voice in `content/style-guide.md` (persona, voice rules, "Never say" list, four examples, anti-example) was **AI-generated for this project** by Claude Code. Its four examples use real headlines and snippets from the seeded past issues, and each commentary uses only facts from its own snippet. Any later change to the voice is the user's call.
 - Never invent facts in commentary. Numbers and named entities must appear in the source article text.
 - Never use `localStorage`/`sessionStorage` for anything that matters (state lives in Neon).
 - Never hardcode the Gemini model ID. Read `GEMINI_MODEL` from env.
@@ -49,7 +50,7 @@ Before Phase 0 ends, ask the user these and record answers in `docs/DECISIONS.md
 
 1. Feed list: approve or edit the candidate sources in `docs/05-INTEGRATIONS.md` §4 (some URLs may be dead).
 2. Topic taxonomy: confirm the 9 topics in `docs/04-AI-PROMPTS.md` §3.
-3. Style guide: use the starter in `docs/09-STYLE-GUIDE-TEMPLATE.md` as is, or has the user written their own?
+3. Style guide: use the starter in `docs/09-STYLE-GUIDE-TEMPLATE.md` as is, or has the user written their own? *(Resolved: AI-generated with the user's permission, see §4.)*
 4. Past four newsletters: does the user have real ones to seed, or should we generate clearly-labelled placeholders?
 5. Demo recipients: only the user's own inbox (decided), and may we also seed Resend's built-in test addresses (`delivered@resend.dev`, `bounced@resend.dev`, `complained@resend.dev`) to demonstrate real bounce webhooks? (Not decided.)
 6. Dashboard visibility: public read-only counts (recommended) or fully behind login?
