@@ -20,7 +20,7 @@ This is an end-term exam project (AI course). The examiner checks the booklet re
 1. The exam booklet (Problem Statement 17) — summarised as R1–R20 in `docs/01-PRODUCT-SPEC.md`.
 2. This file.
 3. `docs/*.md`.
-4. The Components Map (`Newsletter_Agent_Components_Map.xlsx`) — `docs/02-ARCHITECTURE.md` mirrors it. If code and map disagree, fix the code or tell the user the map needs updating. Never silently drift.
+4. The Components Map (`docs/Components-Map.xlsx`, v03, and its one-page `docs/Components-Map.pdf`) — `docs/02-ARCHITECTURE.md` mirrors it. If code and map disagree, fix the code or tell the user the map needs updating. Never silently drift.
 
 ## 3. Hard constraints (from the booklet)
 
@@ -29,6 +29,7 @@ This is an end-term exam project (AI course). The examiner checks the booklet re
 - Uses **live external data** wherever possible, and must **work with some data at submission time** (seed data, see `docs/03-DATA-MODEL.md`).
 - **The system must never send the newsletter without Shreya's explicit confirmation.**
 - Everything must be free-tier. No paid services, no credit card.
+  **Exception (user decision, 2026-10-12):** the Gemini API project was moved to Google's paid prepay tier (a small top-up) after the free tier returned HTTP 429 quota errors during testing. It is still Gemini Flash, so the booklet rule is unchanged. Every other service (Vercel, Neon, GNews, Telegram, Resend) is on its free tier.
 
 ## 4. Never do
 
@@ -52,9 +53,9 @@ Before Phase 0 ends, ask the user these and record answers in `docs/DECISIONS.md
 2. Topic taxonomy: confirm the 9 topics in `docs/04-AI-PROMPTS.md` §3.
 3. Style guide: use the starter in `docs/09-STYLE-GUIDE-TEMPLATE.md` as is, or has the user written their own? *(Resolved: AI-generated with the user's permission, see §4.)*
 4. Past four newsletters: does the user have real ones to seed, or should we generate clearly-labelled placeholders?
-5. Demo recipients: only the user's own inbox (decided), and may we also seed Resend's built-in test addresses (`delivered@resend.dev`, `bounced@resend.dev`, `complained@resend.dev`) to demonstrate real bounce webhooks? (Not decided.)
-6. Dashboard visibility: public read-only counts (recommended) or fully behind login?
-7. Newsletter name and sender display: "The Dispatch" and `onboarding@resend.dev` (default) — confirm.
+5. Demo recipients: only the user's own inbox (decided), and may we also seed Resend's built-in test addresses (`delivered@resend.dev`, `bounced@resend.dev`, `complained@resend.dev`) to demonstrate real bounce webhooks? *(Resolved: yes, seeded.)*
+6. Dashboard visibility: public read-only counts (recommended) or fully behind login? *(Resolved: public. Later the app became Shreya's open Editor's Desk plus a Settings & status page, see `docs/DECISIONS.md`.)*
+7. Newsletter name and sender display: "The Dispatch" and `onboarding@resend.dev` (default) — confirm. *(Resolved: both kept; no custom domain.)*
 
 If a decision is missing mid-build, ask once, in one message, with the default you will use if they do not answer.
 
@@ -70,7 +71,7 @@ If a decision is missing mid-build, ask once, in one message, with the default y
 | RSS | `rss-parser` |
 | News API | GNews (free tier) |
 | Chat | Telegram Bot API (webhook mode), no bot framework — plain `fetch` |
-| Email | Resend (`resend` SDK) + Svix verification for webhooks |
+| Email | Resend (`resend` SDK) + Svix-format signature verification for webhooks (implemented with `node:crypto`, no `svix` package) |
 | Tests | Vitest |
 | Styling | Plain CSS variables + CSS modules (or one global stylesheet). No Tailwind, no UI kit. Design = `docs/06-DESIGN.md` |
 | Fonts | `next/font/google`: Playfair Display, Bitter, PT Sans |
@@ -137,6 +138,6 @@ Document all in `.env.example` (no real values). Never commit `.env*` except the
 
 - Every requirement R1–R20 in `docs/01-PRODUCT-SPEC.md` has a passing acceptance check listed in `docs/08-TESTING-DEMO-SUBMISSION.md`.
 - `npm run demo:week` runs a full simulated week end-to-end against live feeds and Gemini, with Telegram confirmation done by hand and the send going only to the allowlist.
-- Public URL shows: landing/subscribe, issue archive, live dashboard with real run logs, unsubscribe page.
+- Public URL opens Shreya's Editor's Desk (`/desk`), plus the issue archive, the article library, Settings & status (real run logs, live send gate, audit trail) and the unsubscribe page. (The landing/subscribe page was removed on 2026-10-12: the app is for Shreya; subscribers only receive the email.)
 - README, `.env.example`, Components Map and `docs/` are in the repo.
 - No secrets in git history.

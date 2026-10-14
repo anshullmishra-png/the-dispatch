@@ -52,7 +52,7 @@ Read: `docs/05-INTEGRATIONS.md` §4–5, `docs/06-DESIGN.md` §8.
 
 ## Phase 8 — Public site and dashboard
 Read: `docs/06-DESIGN.md`.
-- Tokens, fonts, rulebox, paper grain, components. Pages: landing + subscribe, archive, issue view, dashboard, unsubscribe.
+- Tokens, fonts, rulebox, paper grain, components. Pages: landing + subscribe, archive, issue view, dashboard, unsubscribe. *(As built: later reshaped into the Editor's Desk, archive, articles, Settings & status, style guide and unsubscribe; landing/subscribe removed. See `docs/DECISIONS.md`.)*
 - Metrics: voice-fidelity %, pipeline stats, topic spread, subscriber status counts.
 - **Done when:** all pages render on mobile and desktop with real data; dashboard shows real recent runs; Lighthouse accessibility ≥90; contrast rules from design doc respected; no console errors.
 

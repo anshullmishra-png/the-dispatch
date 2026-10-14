@@ -17,7 +17,7 @@
 | `hygiene.ts` | bounce/complaint/unsubscribe set status; idempotent; skipped in next send selection |
 | `render.ts` | HTML contains all stories, unsubscribe link, no `<script>`, escapes `<` in commentary; text version matches |
 | `telegram/cards.ts` | escaping; callback data ≤64 bytes; card lengths <4096 |
-| `metrics.ts` | voice-fidelity calculation |
+| `metrics.ts` | voice-fidelity calculation *(folded into `lib/site/queries.ts`; covered by `editSimilarity` tests in `tests/review.test.ts`)* |
 
 ## 2. Integration checks (manual or scripted, with real services)
 
@@ -43,7 +43,7 @@
 
 Use `npm run demo:week`, or the admin "Run now" buttons on `/dashboard`. Say what the cron schedule would do, then do it on demand.
 
-1. **Open the public URL.** Show landing, archive (4 past issues), dashboard (live runs, sources, subscriber counts).
+1. **Open the public URL.** It opens Shreya's Desk; then the archive (4 past issues), Articles and Settings & status (live runs, sources, subscriber counts). *(Landing page removed 2026-10-12.)*
 2. **Ingest.** Run ingest. Dashboard shows per-source counts (fetched / new / duplicates). Run again → ~0 new (R2).
 3. **Dedupe against past issues.** Show an article marked `seen_before` with the issue it matched (R3).
 4. **Curate.** Run curate. Show 8–10 picks, topics (≥3), signal tags, rationales, and flagged warnings if any (R4–R8, X1, X7).
@@ -73,7 +73,7 @@ Use `npm run demo:week`, or the admin "Run now" buttons on `/dashboard`. Say wha
 
 ## 5. Submission checklist
 
-- [x] Public Vercel URL loads: landing, archive, dashboard, unsubscribe (checked desktop + 375 px, no console errors)
+- [x] Public Vercel URL loads: desk, archive, articles, status, unsubscribe (checked desktop + 375 px, no console errors)
 - [x] GitHub repo link (public), no secrets in history (value scan of `git log -p --all`: 0 hits; only `.env.example` ever committed)
 - [x] Components Map (`.xlsx`) in the repo (`docs/Components-Map.xlsx`) — attach it to the submission yourself
 - [x] README: overview, setup, env vars, demo script, limits, Q&A answers

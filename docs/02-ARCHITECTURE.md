@@ -12,7 +12,7 @@ Mirrors `Newsletter_Agent_Components_Map.xlsx`. Six columns only: Trigger, Input
 | 4 | Processing | Backend (code) | Dedupe by URL + title match within the week; drop anything in the last 4 issues. |
 | 5 | AI | Gemini Flash | Pick 8–10 stories + 5 backups (high signal, ≥3 topics, none in last 4). Draft 2–3 lines each in Shreya's voice. |
 | 6 | Output | Backend (code) | Validate the pick (count, topics, no repeats), re-ask Gemini if it fails. Save draft, send to Telegram Wed evening. |
-| 7 | Output | Review gate (Shreya, Telegram) | Keep/edit/swap each story, then confirm. No confirm by 10 PM → reminder. |
+| 7 | Output | Review gate (Shreya, Telegram or the web Desk) | Keep/edit/swap/remove each story, then confirm. No confirm by 10 PM → reminder. |
 | 8 | Output | Send gate (code) | Thu morning: passes only if status = `CONFIRMED` and content hash unchanged. Else hold + alert. |
 | 9 | Output | Resend | Render HTML email with unsubscribe link, send. Bounce webhook + unsubscribes update Neon. |
 
@@ -25,11 +25,16 @@ Not drawn on the map (document in README): swap loop, edit-after-confirm loop, r
 ## 3. Folder structure
 
 ```
-app/
-  page.tsx                         landing (masthead, latest issue, subscribe)
+app/                             (as built, 2026-10-12)
+  page.tsx                         redirects to /desk (the app is Shreya's desk)
+  desk/page.tsx + actions.ts       Editor's Desk: review, edit/swap/remove, confirm, hold
   issues/page.tsx                  archive list
   issues/[slug]/page.tsx           web view of one sent issue
-  dashboard/page.tsx               live pipeline dashboard (public read-only)
+  articles/page.tsx                article library + "check a headline" dedupe tool
+  status/page.tsx                  Settings & status: send gate, timeline, audit trail, runs
+  style-guide/page.tsx             the active editorial voice
+  preview/route.ts                 the exact email HTML for this week's issue
+  dashboard/page.tsx               redirects to /status
   unsubscribe/page.tsx             confirm page (GET shows form; POST/one-click handled by api)
   api/
     cron/ingest/route.ts
@@ -39,8 +44,9 @@ app/
     cron/send/route.ts
     telegram/webhook/route.ts
     webhooks/resend/route.ts
-    subscribe/route.ts
     unsubscribe/route.ts
+    dedupe-check/route.ts          public, read-only headline checker
+    admin/check-keys/route.ts      proves deployed keys work (statuses only)
     admin/run/[job]/route.ts       manual trigger, ADMIN_TOKEN
     admin/telegram-setup/route.ts  calls setWebhook
     admin/simulate/route.ts        simulate bounce/unsubscribe/confirm (DEMO only)
@@ -66,14 +72,17 @@ lib/
   curate/lint.ts                   voiceLint(), groundingLint()
   curate/draft.ts                  persistDraft()
   approval/fsm.ts                  transition(), assertSendAllowed(), contentHash()
+  approval/review.ts               keep/edit/swap/remove/approve-all/confirm/hold (used by Telegram and the Desk)
   telegram/api.ts                  tgCall(), sendMessage(), editMessage(), answerCallback()
   telegram/cards.ts                renderHeader/Story/Final/Reminder
-  telegram/handlers.ts             onCallback(), onMessage() (keep/edit/swap/confirm/hold)
+  telegram/handlers.ts             onCallback(), onMessage() (keep/edit/swap/remove/confirm/hold)
+  telegram/deliver.ts, sync.ts     post/refresh cards; resync after a web action
   mail/render.ts                   renderIssueHtml(), renderIssueText()
   mail/send.ts                     sendIssue() — the ONLY file importing Resend
+  mail/run-send.ts                 send-or-hold decision; mail/svix.ts webhook signature check
   mail/tokens.ts                   signUnsubToken(), verifyUnsubToken()
   subscribers/hygiene.ts           applyBounce(), applyComplaint(), applyUnsubscribe()
-  metrics.ts                       voice-fidelity %, pipeline stats for dashboard
+  site/queries.ts, proof.ts, schedule.ts   page data, live evidence (gate, audit), next cron run (metrics.ts was folded in here)
 content/
   style-guide.md
   topics.json
@@ -209,5 +218,6 @@ All guards fail closed: if `SHREYA_TG_USER_ID` is unset, Confirm and the send ga
 - Resend: verify Svix signature headers; reject if timestamp skew is too large.
 - Unsubscribe tokens: HMAC-SHA256 over `subscriberId` with `UNSUB_SIGNING_KEY`; no expiry (unsubscribe links must keep working).
 - Never log emails in full; log first 2 chars + domain.
-- Subscribe form: server-side email validation, per-IP rate limit (in-memory is acceptable on Hobby; note limitation).
+- ~~Subscribe form~~: removed on 2026-10-12 (no public sign-up).
+- The web Desk is open for the demo (user decision): its actions act as Shreya through the same review code, audit trail and send gate; demo mode limits real mail to the allowlist.
 - All HTML rendered into emails and Telegram messages is escaped.

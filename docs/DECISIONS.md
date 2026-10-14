@@ -86,12 +86,12 @@ Deviations recorded in Phase 4: short candidate ids (`a01`…) mapped to UUIDs; 
 ## Open
 
 - [x] Feed list approval (Phase 2: 20 RSS + 5 GNews)
-- [ ] Sender: custom domain or `onboarding@resend.dev` (Phase 7)
+- [x] Sender: `onboarding@resend.dev` (user skipped the custom domain; Gmail may file it as spam, noted in README)
 - [x] `content/style-guide.md` filled (AI-generated with permission, Phase 4)
-- [ ] Confirm `DEMO_MODE` defaults to `true` when unset (see Deviations)
-- [ ] Map text: "Thu 8 AM" → "Thu 7:30–8:30 AM IST" (user edits the workbook)
+- [x] `DEMO_MODE` defaults to `true` when unset (kept; every live run used demo mode)
+- [x] Map text: kept "Thu 8 AM" in v03 (the send fires 07:30–08:29 IST, so "about 8 AM" is accurate)
 - [x] GNews starter queries replaced (Phase 2)
-- [ ] Rotate keys before submission (see "Secrets location")
+- [x] Rotate keys: done 2026-10-12 after submission (Neon password, Gemini, GNews, Telegram token, Resend); old keys revoked or deleted; verified on the live server with `/api/admin/check-keys`
 
 ## VERIFY log
 
@@ -148,7 +148,7 @@ Checked against official provider docs on 2026-10-12.
 | 2026-10-12 | Resend idempotency key = `<issueId>-<contentHash12>-b<batch>` (was `<issueId>-b<batch>`) | Found in the Phase 9 rehearsal: after a reset, batch 1 reused a key with a different body and Resend refused it. The content hash keeps retries deduped and new content distinct |
 | 2026-10-12 | `assertSendAllowed({resuming})` accepts `SENDING` for a resumed send; every other guard still applies | A send that runs out of time must be able to continue; unit-tested |
 | 2026-10-12 | Resend webhook created by `scripts/resend-webhook.ts` through the Resend API (no dashboard step); Svix verification written with `node:crypto` | Only `lib/mail/send.ts` may import the Resend SDK; no extra dependency |
-| 2026-10-12 | Web subscribers are stored `active` (source `web`), no double opt-in | The free `resend.dev` sender can't mail anyone but the owner, so a confirmation email needs a verified domain. Demo mode means they get nothing real anyway. Honeypot field against bots |
+| 2026-10-12 | *(Superseded: the subscribe form was removed later the same day.)* Web subscribers are stored `active` (source `web`), no double opt-in | The free `resend.dev` sender can't mail anyone but the owner, so a confirmation email needs a verified domain. Demo mode means they get nothing real anyway. Honeypot field against bots |
 | 2026-10-12 | Landing marquee `clamp(44px, 16vw, 304px)` (doc: `clamp(72px, 18vw, 304px)`) | 72 px made "DISPATCH" overflow the frame at 375 px wide |
 | 2026-10-12 | Dashboard admin strip (Run now / simulate buttons) not built; `POST /api/admin/run/[job]`, `/api/admin/simulate` and `npm run demo:week` cover it | Time; the demo does not need an admin cookie flow |
 | 2026-10-12 | `npm run demo:week -- --reset` resets this week's issue to COLLECTING (keeps articles; drops draft, reviews, send log) | The 15 Oct issue was already sent by the Phase 7 test; a rehearsal needs a fresh draft on live data. `--auto-confirm` taps Approve all + Confirm as Shreya through the signed webhook |
@@ -162,7 +162,7 @@ Checked against official provider docs on 2026-10-12.
 | Manual phone test | User asked to automate testing because of the 11 PM deadline: `npm run e2e:telegram` (17 checks) and `npm run e2e:send` (21 checks) run against production; the user's own taps (Keep, Approve all, Confirm) were also logged |
 | Resend | Account on `anshullmishra@gmail.com`, full-access key, sender `onboarding@resend.dev` (no domain) |
 | Stop after each phase | Replaced by "complete all phases, test once done" (user, Phase 6) |
-| Web app visibility (after review against the brief) | Added `/articles` (article library with status, duplicate match + similarity, Last-4 match, filters, search), dashboard draft panel (picks with signal, rationale, flags, review state), pipeline strip (last ingest, next job from `vercel.json`, failing/paused feeds, eligible stories), delivery history, `/style-guide`. **No web editor**: Telegram stays the only control surface, so there is one approval path |
+| Web app visibility (after review against the brief) | Added `/articles` (article library with status, duplicate match + similarity, Last-4 match, filters, search), dashboard draft panel (picks with signal, rationale, flags, review state), pipeline strip (last ingest, next job from `vercel.json`, failing/paused feeds, eligible stories), delivery history, `/style-guide`. **No web editor** at this point *(superseded by "Desk editing" below: the web Desk now has the same actions through the same backend)* |
 | Draft visibility | **Public**, labelled "Draft — not yet confirmed" (user chose option a) |
 | Evidence on the dashboard (after a second review against the brief) | Live send gate (the 6 checks for this issue), week timeline, audit trail of every review action, send attempts from `pipeline_runs` (survive demo resets, include held runs), delivery-mode panel explaining the synthetic list, list-hygiene panel with recent Resend events, per-pick voice and Last-4 check computed live, `/preview` (exact email HTML), and a public headline checker (`/api/dedupe-check`, read-only) running the ingest dedupe rule. DEMO_MODE stays on: the free sender can only reach the owner and the list is synthetic |
 | Editor-first web app (user, after a third review) | `/desk` is Shreya's workspace: three separate states (her review · scheduled delivery · delivery outcome), what needs her attention, every story with "why", fact flags and voice check, alternatives, collapsed swapped/removed list, email preview. `/dashboard` became `/status` (engineering evidence). Telegram login (`/web`) and live web tests skipped by the user |
@@ -173,5 +173,8 @@ Checked against official provider docs on 2026-10-12.
 | RSS depth | 100 items per feed (was 40), so Monday's run still reaches the previous Wednesday afternoon on busy feeds. Observed for 15 Oct: Thu 65, Fri 160, Sat 101, Sun 79 articles collected on Monday |
 | Flags after review changes | ⚠ flags (grounding, voice warnings, repeated openings) are recomputed for every live pick after an edit, swap or remove, so a fixed problem disappears and a new one shows (was: computed once at curate) |
 | Reminder time vs "by Wednesday 10 PM" | Two daily remind crons (21:30–22:29 and 22:30–23:29 IST). The route skips if it runs before 22:00 IST (`reminderDeadline`), so the first check at or after 10 PM sends the reminder and the second is a fallback. On Hobby the reminder therefore lands between 22:00 and 23:29, never before the deadline. Earlier version: one cron at 22:30–23:29 only |
+| Gemini paid tier (user decision) | The Gemini API project was moved to Google's paid **prepay** tier (minimum top-up about $5) after the free tier returned HTTP 429 quota errors during testing. Exception to `CLAUDE.md` §3 "free-tier only"; still Gemini Flash, so the booklet rule holds. Other services stay free |
+| Key rotation (after submission) | All five keys rotated without pasting them into chat (the user copied each to the clipboard; Claude read, validated and stored it). Old Neon password reset, old GNews key dead (401), old Telegram token revoked (401), old Gemini and Resend keys deleted. The live server re-verified each new key |
+| Components Map | v03 (`docs/Components-Map.xlsx` + one-page PDF): steps 2, 6 and 7 and the public-URL note updated to match the build; arrows and layout unchanged. v02 kept untouched |
 | Remove story | Added to Telegram (`r:<story8>`, 🗑 Remove on its own row). Allowed only if ≥8 stories and ≥3 topics remain; later stories renumber; the article becomes `rejected`; audited as `approvals.action='remove'` (migration 0003). Stored as `SWAPPED_OUT` with no replacement, so no enum change |
 

@@ -8,7 +8,7 @@ Items marked **VERIFY** may have changed. Check the provider's current docs befo
 - `rss-parser`, custom `User-Agent: TheDispatchBot/1.0 (+APP_URL)`.
 - Per-feed timeout 8 s, run feeds with concurrency 6 (`Promise.allSettled`).
 - Keep items with a valid link and title, `published_at` inside the issue window (if the feed omits dates, use fetch time and set `raw.date_missing=true`).
-- Max 40 items per feed per run.
+- Max **100** items per feed per run (was 40; raised 2026-10-12 so Monday's run still reaches the previous Wednesday afternoon on busy feeds).
 - Snippet: `contentSnippet` or stripped `content:encoded`/`description`, ≤600 chars stored (≤280 sent to Gemini).
 - Update `sources.last_ok_at` or `consecutive_failures/last_error`.
 
@@ -161,10 +161,12 @@ Plain `fetch` to `https://api.telegram.org/bot<TOKEN>/<method>`. No bot framewor
   "regions": ["sin1"],
   "crons": [
     { "path": "/api/cron/ingest", "schedule": "0 3 * * 1-3" },
+    { "path": "/api/cron/ingest?slot=precurate", "schedule": "0 8 * * 3" },
     { "path": "/api/cron/curate", "schedule": "0 9 * * 3" },
     { "path": "/api/cron/notify", "schedule": "0 12 * * 3" },
-    { "path": "/api/cron/remind", "schedule": "0 17 * * 3" },
-    { "path": "/api/cron/send",   "schedule": "0 2 * * 4" }
+    { "path": "/api/cron/remind?check=1", "schedule": "0 16 * * 3" },
+    { "path": "/api/cron/remind?check=2", "schedule": "0 17 * * 3" },
+    { "path": "/api/cron/send", "schedule": "0 2 * * 4" }
   ]
 }
 ```

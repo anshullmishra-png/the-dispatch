@@ -37,7 +37,7 @@ An automated pipeline for Shreya's weekly newsletter on the Indian startup ecosy
 
 Full components map, routes and state machine: [`docs/02-ARCHITECTURE.md`](docs/02-ARCHITECTURE.md).
 
-Stack: Next.js 16 (App Router, TypeScript strict) on Vercel Hobby · Neon Postgres 18 + Drizzle · Gemini Flash (`@google/genai`, `gemini-3.6-flash` with `gemini-3-flash-preview` fallback) · RSS + GNews · Telegram Bot API (plain fetch) · Resend · Vitest. Everything runs on free tiers.
+Stack: Next.js 16 (App Router, TypeScript strict) on Vercel Hobby · Neon Postgres 18 + Drizzle · Gemini Flash (`@google/genai`, `gemini-3.6-flash` with `gemini-3-flash-preview` fallback) · RSS + GNews · Telegram Bot API (plain fetch) · Resend · Vitest. Everything runs on free tiers except Gemini, which was moved to Google's paid prepay tier after free-tier quota errors (still Gemini Flash).
 
 ## Setup
 
@@ -125,7 +125,7 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 ## Known limits
 
 - **Cron precision:** Hobby fires each job once a day, anywhere within its hour, best effort (a run can be missed or doubled; jobs are idempotent).
-- **Free tiers:** GNews 100 requests/day with a 12 h delay; Resend 100 emails/day, 3,000/month; Gemini free-tier limits are per key and overloads (503) come in waves, handled by retry and a fallback Flash model.
+- **Free tiers:** GNews 100 requests/day with a 12 h delay; Resend 100 emails/day, 3,000/month. Gemini is on the paid prepay tier (after free-tier 429s); its overloads (503) still come in waves, handled by retry and a fallback Flash model.
 - **Resend sender:** `onboarding@resend.dev` delivers only to the account owner, so the 2,200 subscribers are synthetic (`@example.invalid`) plus Resend test inboxes. A verified domain would lift this.
 - **Spam folder:** with Resend's shared test sender, Gmail may file the issue under Spam (seen on 2026-10-12). Marking it "Not spam" fixes it for that inbox; a verified domain with SPF/DKIM fixes it for everyone.
 - **Shreya's voice** in `content/style-guide.md` was AI-generated with the user's permission (CLAUDE.md §4); her real edits become few-shot examples over time.
@@ -133,7 +133,7 @@ Fallback if a free tier runs out: `GEMINI_MOCK=true` runs curate from a fixture;
 - **Grounding lint** is a heuristic: it can miss a paraphrased invention and occasionally flags a correct one.
 - A send interrupted mid-batch leaves those rows `queued` (not retried automatically); the unique send_log row guarantees no one is mailed twice.
 - No dashboard admin buttons or web editor (Telegram is the one control surface); use `POST /api/admin/run/[job]` or `npm run demo:week`.
-- Gemini's free tier returned HTTP 429 after many curate runs on 2026-10-12; retries and the fallback model handle short waves, `GEMINI_MOCK` is the fallback for a demo.
+- Gemini's free tier returned HTTP 429 after many curate runs on 2026-10-12, so the project moved to the paid prepay tier; overload waves (503) are still handled by retries and the fallback model, and `GEMINI_MOCK` is the fallback for a demo.
 
 ## Docs
 

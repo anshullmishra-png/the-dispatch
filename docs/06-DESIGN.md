@@ -104,7 +104,9 @@ Italic serif is for eyebrows, quotes and sign-offs only, never full paragraphs.
 
 ## 7b. Pages
 
-**Landing `/`**
+> **As built (2026-10-12):** the landing page and subscribe form below were built, then removed when the app became Shreya's desk. `/` now redirects to `/desk`, which uses the same tokens, rulebox and type scale (its hero uses the 48 px section heading). The "dashboard" became `/status` (Settings & status). See `docs/DECISIONS.md`.
+
+**Landing `/`** *(removed)*
 1. Masthead marquee "THE / DISPATCH" split across two lines with a red diamond glyph between (the signature move). Eyebrow italic: "A weekly read on India's startup ecosystem".
 2. Two-column band: left = prose + subscribe form; right = solid red panel with the latest issue's headline list (white text ≥18 px bold).
 3. Three-up "How it works" cards: Collected → Curated → Confirmed (one line each).

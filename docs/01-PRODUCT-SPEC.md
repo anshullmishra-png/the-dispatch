@@ -5,7 +5,7 @@
 | Term | Meaning |
 |---|---|
 | Issue | One edition of The Dispatch, identified by its Thursday send date (`issue_date`, IST). |
-| Issue window | From the previous Thursday 00:00 IST to the Wednesday of the current week 23:59:59.999 IST. Consecutive windows touch, so every instant belongs to exactly one issue. Articles published in the window belong to the issue being built. (Changed from Thu 09:00 on 2026-10-12, see `DECISIONS.md`.) |
+| Issue window | From the previous Wednesday 13:30 IST to the Wednesday before the issue, 13:29:59.999 IST (the start of the last ingest before curate). Consecutive windows touch, so every instant belongs to exactly one issue. Articles published in the window belong to the issue being built. (Changed twice on 2026-10-12: Thu 09:00 → Thu 00:00 → Wed 13:30, the last to close the Wednesday-afternoon gap; see `DECISIONS.md`.) |
 | Candidate | An article that survived dedupe and is eligible for selection. |
 | Pick | A candidate chosen for the draft (8–10 per issue). |
 | Backup | A ranked extra candidate Gemini returns with commentary already written, used for swaps (5 per issue). |
@@ -27,7 +27,7 @@ Each requirement comes from the booklet. "Check" is what the examiner (or our de
 | R7 | At least three different topic areas | Validator requires ≥3 distinct `topic` values from the fixed taxonomy. |
 | R8 | 2–3 lines of commentary per story in Shreya's documented voice | Commentary is 2–3 sentences, ≤65 words, passes voice lint, built from `content/style-guide.md`. |
 | R9 | Draft on Telegram by Wednesday evening | Notify job sends a header, one card per story, and a final card, to Shreya's chat. |
-| R10 | Edit, approve or swap each story individually | Each story card has Keep, Edit, Swap buttons that work independently and update the card in place. |
+| R10 | Edit, approve or swap each story individually | Each story card has Keep, Edit, Swap (and Remove) buttons that work independently and update the card in place. The web Desk offers the same actions on the same backend. |
 | R11 | She confirms the final draft | Final card has Confirm. Confirm is refused while any story is still pending. |
 | R12 | Never sends autonomously | With status ≠ `CONFIRMED`, the send cron sends nothing and alerts Shreya. Unit-tested. Editing after confirm resets to `IN_REVIEW`. |
 | R13 | Reminder if no confirmation by Wed 10 PM | Remind job sends one Telegram reminder while status is `IN_REVIEW`; none if already confirmed. |
@@ -35,7 +35,7 @@ Each requirement comes from the booklet. "Check" is what the examiner (or our de
 | R15 | Unsubscribes handled | Email has an unsubscribe link and one-click `List-Unsubscribe`. Using it sets `unsubscribed`; next send skips that address. |
 | R16 | Bounces handled (booklet wording: "Gmail bounces"; we use Resend webhooks) | A `email.bounced` or `email.complained` webhook marks the subscriber `bounced`/`complained`; next send skips them. Verified with a signed test event. |
 | R17 | Gemini Flash only | `grep` shows no other AI SDKs. All AI calls go through `lib/ai/gemini.ts`. |
-| R18 | Deployed on Vercel with a public URL | URL loads landing page and dashboard. |
+| R18 | Deployed on Vercel with a public URL | URL loads Shreya's Editor's Desk; Settings & status shows the live pipeline. |
 | R19 | Live data + works with some data at submission | Fresh ingest pulls real articles. Seed data (4 past issues, style guide, subscribers) lets a full demo week run on day one. |
 | R20 | Deliverables | Public URL, GitHub link, Components Map file all in the submission. |
 
@@ -52,7 +52,7 @@ Each requirement comes from the booklet. "Check" is what the examiner (or our de
 
 - No payments, no paywall, no multi-newsletter tenancy.
 - No open/click tracking by default (privacy; optional stretch only).
-- No web login system. Shreya's control surface is Telegram. Admin actions use `ADMIN_TOKEN`.
+- No web login system. Telegram is Shreya's primary control surface; the web Desk (`/desk`) offers the same actions through the same backend and send gate, and is open for the demo (user decision 2026-10-12). Admin actions use `ADMIN_TOKEN`.
 - No embeddings or vector DB.
 - No sending to the real 2,200 addresses. The 2,200-row list is synthetic; real mail goes only to `SEND_ALLOWLIST` in demo mode.
 
@@ -63,12 +63,12 @@ Each requirement comes from the booklet. "Check" is what the examiner (or our de
 | X1 | "Why this story" rationale + signal tag on every pick, shown in Telegram | Explains AI judgment, supports editorial control | S |
 | X2 | Hash-locked confirmation + approvals audit trail | Makes R12 provable, not just promised | S |
 | X3 | Public issue archive with web view of each issue | Gives the public URL real content; doubles as seed for Last-4 | M |
-| X4 | Live dashboard: run logs, per-source counts, topic spread, issue status timeline | Proves live data (R19), shows pipeline health | M |
+| X4 | Live dashboard: run logs, per-source counts, topic spread, issue status timeline (built as `/status`, "Settings & status") | Proves live data (R19), shows pipeline health | M |
 | X5 | Voice-fidelity metric: % of AI commentary Shreya kept unedited, and her edits stored as few-shot examples | Shows the AI improves from feedback; evaluates quality | S |
 | X6 | Demo mode + simulate-bounce/unsubscribe endpoints | Lets you demonstrate R15/R16 with only your own inbox | S |
 | X7 | Grounding lint (numbers/entities must appear in source) | Reduces hallucination, visible in Telegram as a warning flag | S |
 | X8 | Idempotent crons, retries with backoff, graceful degradation | Reliability a grader can see in logs | S |
-| X9 | Subscribe form on landing page (with duplicate/format checks) | Gives the public site a purpose | S |
-| X10 | Web review editor (`/review/[issue]`) with signed link | Optional second control surface | L — **only after everything else works** |
+| X9 | ~~Subscribe form on landing page~~ | Built, then **removed** on 2026-10-12: the app is Shreya's desk, not a subscriber site | — |
+| X10 | Web review editor | Built as the Editor's Desk (`/desk`): open for the demo, no signed link (user decision); same review code, audit trail and send gate as Telegram | L |
 
 Do X1–X9. X10 is stretch.

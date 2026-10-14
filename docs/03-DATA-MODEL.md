@@ -212,13 +212,13 @@ Migrations: `db/migrations/0000_extensions.sql` (custom: the three extensions) r
 - `content_hash` is set only at confirm and cleared by any later change.
 - `send_log` unique `(issue_id, subscriber_id)` is what makes the send resumable and double-send-proof.
 - Subscriber statuses that may receive mail: `active` only.
-- Use a transaction (Neon WebSocket Pool driver, not the HTTP driver) for: swap, confirm, and claiming send batches (`SELECT … FOR UPDATE SKIP LOCKED`).
+- Use a transaction (Neon WebSocket Pool driver, not the HTTP driver) for review actions (keep, edit, swap, remove, approve all) and confirm. Send batches are claimed with one `INSERT … SELECT … ON CONFLICT DO NOTHING RETURNING` on the unique `send_log` row instead of `FOR UPDATE SKIP LOCKED` (see `DECISIONS.md`).
 
 ## Seed data (required for R19)
 
 `npm run seed` must be re-runnable (`ON CONFLICT DO NOTHING`) and create:
 
-1. **Sources**: from `content/sources.seed.json` (20 RSS + 10 GNews queries). Candidates until the Phase 2 probe; the user approves the final list then.
+1. **Sources**: from `content/sources.seed.json`. Final list approved in Phase 2: **20 RSS feeds + 5 GNews queries** (the starter list had 10 queries).
 2. **Four past issues**, status `SENT`, dated the previous four Thursdays, each with 8–10 stories (headline, URL, topic, commentary). User decision 2026-10-12: stories are **real articles** fetched from GNews for each past week by `npm run seed:issues` (`scripts/build-seed-issues.ts`, ~12–18 requests), cached in `db/seed/past-issues.json` (titles, links, publishers only). Subjects start with `[SEED]`. Commentary is the fixed placeholder `[SEED] Placeholder commentary…`, never Shreya's voice. Topics rotate so all nine appear across the four issues, so the Last-4 filter has something to bite on.
 3. **Subscribers**: 2,200 rows.
    - 1 real: the user's own email, `active`, from `SEND_ALLOWLIST`.
